@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>jezabel.net - hacker's codex</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0d0015;
+            --fg: #f0e0ff;
+            --accent: #ff00ff;
+            --dim: #7a4a7a;
+            --darker: #050008;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.6;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        /* SERPENT CODE TRAILS - SLYTHERIN */
+        .serpent-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        #serpent-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            flex: 1;
+        }
+
+        header {
+            margin-bottom: 4rem;
+            border-bottom: 1px solid var(--dim);
+            padding-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 300;
+            letter-spacing: -2px;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+            text-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+        }
+
+        .tagline {
+            color: var(--dim);
+            font-size: 1.1rem;
+        }
+
+        .hero {
+            margin-bottom: 4rem;
+        }
+
+        .hero-text {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            line-height: 1.8;
+        }
+        
+        .typing-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1.2em;
+            background: var(--accent);
+            margin-left: 2px;
+            animation: blink 0.7s infinite;
+            vertical-align: middle;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .codex-intro {
+            background: var(--darker);
+            border: 1px solid var(--dim);
+            padding: 2rem;
+            margin-bottom: 4rem;
+            border-left: 3px solid var(--accent);
+        }
+
+        .codex-intro h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            font-weight: 300;
+            color: var(--accent);
+        }
+
+        .code-sample {
+            background: #000;
+            border: 1px solid var(--accent);
+            padding: 1.5rem;
+            margin-top: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+
+        .code-sample code {
+            color: var(--accent);
+        }
+
+        .libraries {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .library {
+            border: 1px solid var(--dim);
+            padding: 2rem;
+            transition: all 0.3s;
+            background: var(--darker);
+            position: relative;
+        }
+
+        .library:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.15);
+        }
+
+        .library::before {
+            content: "</>";
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            color: var(--dim);
+            font-size: 1.5rem;
+        }
+
+        .library-lang {
+            color: var(--accent);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .library-title {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--fg);
+        }
+
+        .library-desc {
+            color: var(--dim);
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .library-stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: var(--dim);
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .access-section {
+            background: var(--darker);
+            border: 1px solid var(--accent);
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .access-section h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 300;
+        }
+
+        .access-terminal {
+            background: #000;
+            border: 2px solid var(--dim);
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 600px;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+
+        .terminal-line {
+            color: var(--dim);
+            margin-bottom: 0.5rem;
+        }
+
+        .terminal-line span {
+            color: var(--accent);
+        }
+
+        .terminal-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: var(--accent);
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .manifesto {
+            border: 1px solid var(--dim);
+            padding: 2rem;
+            margin-bottom: 4rem;
+            background: var(--darker);
+        }
+
+        .manifesto h3 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-weight: 300;
+        }
+
+        .manifesto ul {
+            list-style: none;
+            color: var(--dim);
+        }
+
+        .manifesto li {
+            margin-bottom: 0.5rem;
+            padding-left: 1rem;
+        }
+
+        .manifesto li::before {
+            content: "→ ";
+            color: var(--accent);
+            margin-right: 0.5rem;
+        }
+
+        .cta {
+            text-align: center;
+            margin: 4rem 0;
+        }
+
+        .cta-text {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: transparent;
+            color: var(--accent);
+            border: 2px solid var(--accent);
+            padding: 1rem 3rem;
+            text-decoration: none;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            font-family: 'Courier New', monospace;
+        }
+
+        .cta-button:hover {
+            background: var(--accent);
+            color: var(--bg);
+            box-shadow: 0 0 40px rgba(255, 0, 255, 0.4);
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            border-top: 1px solid var(--dim);
+            margin-top: 4rem;
+        }
+
+        .powered {
+            color: var(--dim);
+            font-size: 0.9rem;
+        }
+
+        .powered a {
+            color: var(--fg);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .powered a:hover {
+            color: var(--accent);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .hero-text {
+                font-size: 1.1rem;
+            }
+
+            .libraries {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="serpent-background">
+        <canvas id="serpent-canvas"></canvas>
+    </div>
+    
+    <div class="container">
+        <header>
+            <h1>jezabel.net</h1>
+            <p class="tagline">hacker's codex / curated code library</p>
+        </header>
+
+        <section class="hero">
+            <p class="hero-text" id="typing-text"></p>
+        </section>
+
+        <section class="codex-intro">
+            <h2>the codex</h2>
+            <p style="color: var(--dim); margin-bottom: 1rem;">
+                not scripts. not snippets. complete modules.
+                battle-tested. production-ready. ethical or otherwise.
+            </p>
+            <div class="code-sample">
+                <code>
+→ import { exploit } from 'jezabel/core';<br>
+→ const target = document.querySelector('.vulnerable');<br>
+→ exploit.execute(target, payload);<br>
+<span style="color: var(--dim)">// your code. your rules.</span>
+                </code>
+            </div>
+        </section>
+
+        <section class="libraries">
+            <div class="library">
+                <div class="library-lang">javascript</div>
+                <h3 class="library-title">core exploits</h3>
+                <p class="library-desc">
+                    DOM manipulation. XSS vectors. Event hijacking.
+                    The fundamentals every hacker needs.
+                </p>
+                <div class="library-stats">
+                    <span class="stat-item">◉ 47 modules</span>
+                    <span class="stat-item">◉ es6+</span>
+                </div>
+            </div>
+
+            <div class="library">
+                <div class="library-lang">html</div>
+                <h3 class="library-title">structural patterns</h3>
+                <p class="library-desc">
+                    Semantic bypass. Form injection. Template exploits.
+                    Structure is vulnerability.
+                </p>
+                <div class="library-stats">
+                    <span class="stat-item">◉ 23 patterns</span>
+                    <span class="stat-item">◉ html5</span>
+                </div>
+            </div>
+
+            <div class="library">
+                <div class="library-lang">css</div>
+                <h3 class="library-title">visual deception</h3>
+                <p class="library-desc">
+                    Overlay attacks. UI redressing. Clickjacking frameworks.
+                    What you see isn't what you get.
+                </p>
+                <div class="library-stats">
+                    <span class="stat-item">◉ 31 techniques</span>
+                    <span class="stat-item">◉ css3</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="manifesto">
+            <h3>hacker ethos</h3>
+            <ul>
+                <li>code shared is code multiplied</li>
+                <li>no paywall. no gatekeeping. pure knowledge.</li>
+                <li>white hat. black hat. gray hat. we serve all.</li>
+                <li>learn. apply. contribute back.</li>
+                <li>the web is malleable. bend it to your will.</li>
+            </ul>
+        </section>
+
+        <section class="access-section">
+            <h2>access the library</h2>
+            <div class="access-terminal">
+                <div class="terminal-line">$ <span>jezabel init</span></div>
+                <div class="terminal-line">→ authenticating...</div>
+                <div class="terminal-line">→ codex access: <span>granted</span></div>
+                <div class="terminal-line">→ modules available: <span>101</span></div>
+                <div class="terminal-line">$ <input type="text" id="terminal-input" style="background: transparent; border: none; color: #ff00ff; font-family: 'Courier New', monospace; font-size: inherit; outline: none; width: 80%;" placeholder="type 'jezabel init' to scramble"></div>
+            </div>
+            <p style="color: var(--dim); margin-top: 1rem;">
+                browse. download. implement. no restrictions.
+            </p>
+        </section>
+
+        <section class="cta">
+            <p class="cta-text">ready to enter the codex?</p>
+            <a href="#" class="cta-button">access library</a>
+        </section>
+    </div>
+
+    <footer>
+        <p class="powered">powered by <a href="https://lempyra.com">Lempyrλ</a></p>
+    </footer>
+    
+    <script>
+        // Fast typing animation for hero text
+        const heroText = "knowledge is power. code is knowledge. a library built by hackers, for hackers. js. html. css. the trinity of the web. exploit. create. dominate.";
+        const typingElement = document.getElementById('typing-text');
+        let charIndex = 0;
+        
+        function typeCharacter() {
+            if (charIndex < heroText.length) {
+                typingElement.textContent = heroText.substring(0, charIndex + 1);
+                charIndex++;
+                // Fast typing: 20ms per character (50 chars/second)
+                setTimeout(typeCharacter, 20);
+            } else {
+                // Add blinking cursor after typing completes
+                const cursor = document.createElement('span');
+                cursor.className = 'typing-cursor';
+                typingElement.appendChild(cursor);
+            }
+        }
+        
+        // Start typing on page load
+        window.addEventListener('load', () => {
+            setTimeout(typeCharacter, 500); // Small delay before starting
+        });
+        
+        // SLYTHERIN CONSTELLATION - Connect the Dots with Hacker Colors
+        const serpentCanvas = document.getElementById('serpent-canvas');
+        const sCtx = serpentCanvas.getContext('2d');
+        
+        let hackerStars = [];
+        let mouse = { x: null, y: null };
+        const codeWords = ['hack', 'code', 'exploit', 'root', 'shell', 'inject', 'bypass'];
+        
+        function resizeSerpentCanvas() {
+            serpentCanvas.width = window.innerWidth;
+            serpentCanvas.height = window.innerHeight;
+        }
+        
+        class HackerStar {
+            constructor() {
+                this.x = Math.random() * serpentCanvas.width;
+                this.y = Math.random() * serpentCanvas.height;
+                this.vx = (Math.random() - 0.5) * 0.4;
+                this.vy = (Math.random() - 0.5) * 0.4;
+                this.radius = Math.random() * 2 + 1;
+                this.brightness = Math.random() * 0.5 + 0.5;
+                this.color = Math.random() > 0.5 ? '#ff00ff' : '#00ff00'; // Magenta or Matrix green
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Wrap around edges
+                if (this.x < 0) this.x = serpentCanvas.width;
+                if (this.x > serpentCanvas.width) this.x = 0;
+                if (this.y < 0) this.y = serpentCanvas.height;
+                if (this.y > serpentCanvas.height) this.y = 0;
+                
+                // Brightness pulse
+                this.brightness += (Math.random() - 0.5) * 0.03;
+                this.brightness = Math.max(0.3, Math.min(1, this.brightness));
+            }
+            
+            draw() {
+                sCtx.beginPath();
+                sCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                sCtx.fillStyle = this.color + Math.floor(this.brightness * 255).toString(16).padStart(2, '0');
+                sCtx.fill();
+                
+                // Glow
+                sCtx.shadowBlur = 8;
+                sCtx.shadowColor = this.color;
+                sCtx.fill();
+                sCtx.shadowBlur = 0;
+            }
+        }
+        
+        function initHackerStars() {
+            hackerStars = [];
+            const starCount = Math.floor((serpentCanvas.width * serpentCanvas.height) / 7000);
+            for (let i = 0; i < starCount; i++) {
+                hackerStars.push(new HackerStar());
+            }
+        }
+        
+        function drawHackerConnections() {
+            for (let i = 0; i < hackerStars.length; i++) {
+                for (let j = i + 1; j < hackerStars.length; j++) {
+                    const dx = hackerStars[i].x - hackerStars[j].x;
+                    const dy = hackerStars[i].y - hackerStars[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 130) {
+                        const opacity = (1 - distance / 130) * 0.4;
+                        
+                        // Alternate line colors based on star colors
+                        const lineColor = hackerStars[i].color === '#ff00ff' ? '#ff00ff' : '#00ff00';
+                        
+                        sCtx.beginPath();
+                        sCtx.strokeStyle = lineColor + Math.floor(opacity * 255).toString(16).padStart(2, '0');
+                        sCtx.lineWidth = 0.8;
+                        sCtx.moveTo(hackerStars[i].x, hackerStars[i].y);
+                        sCtx.lineTo(hackerStars[j].x, hackerStars[j].y);
+                        sCtx.stroke();
+                    }
+                }
+            }
+        }
+        
+        function drawMouseHackerConnections() {
+            if (mouse.x === null) return;
+            
+            hackerStars.forEach(star => {
+                const dx = mouse.x - star.x;
+                const dy = mouse.y - star.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 180) {
+                    const opacity = (1 - distance / 180) * 0.6;
+                    sCtx.beginPath();
+                    sCtx.strokeStyle = star.color + Math.floor(opacity * 255).toString(16).padStart(2, '0');
+                    sCtx.lineWidth = 1.5;
+                    sCtx.moveTo(mouse.x, mouse.y);
+                    sCtx.lineTo(star.x, star.y);
+                    sCtx.stroke();
+                }
+            });
+        }
+        
+        function findHackerClusters() {
+            const clusters = [];
+            const visited = new Set();
+            
+            hackerStars.forEach((star, idx) => {
+                if (visited.has(idx)) return;
+                
+                const cluster = [star];
+                visited.add(idx);
+                
+                hackerStars.forEach((other, otherIdx) => {
+                    if (visited.has(otherIdx)) return;
+                    const dx = star.x - other.x;
+                    const dy = star.y - other.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 90) {
+                        cluster.push(other);
+                        visited.add(otherIdx);
+                    }
+                });
+                
+                if (cluster.length >= 5) {
+                    clusters.push(cluster);
+                }
+            });
+            
+            return clusters;
+        }
+        
+        function drawHackerClusterWords() {
+            const clusters = findHackerClusters();
+            
+            clusters.forEach(cluster => {
+                const centerX = cluster.reduce((sum, s) => sum + s.x, 0) / cluster.length;
+                const centerY = cluster.reduce((sum, s) => sum + s.y, 0) / cluster.length;
+                
+                const word = codeWords[Math.floor(Math.random() * codeWords.length)];
+                const opacity = 0.15 + Math.random() * 0.25;
+                const wordColor = cluster[0].color; // Use color of first star in cluster
+                
+                sCtx.font = '13px Courier New';
+                sCtx.fillStyle = wordColor + Math.floor(opacity * 255).toString(16).padStart(2, '0');
+                sCtx.textAlign = 'center';
+                sCtx.fillText(word, centerX, centerY);
+            });
+        }
+        
+        function animateSerpents() {
+            sCtx.fillStyle = 'rgba(13, 0, 21, 0.08)';
+            sCtx.fillRect(0, 0, serpentCanvas.width, serpentCanvas.height);
+            
+            hackerStars.forEach(star => {
+                star.update();
+                star.draw();
+            });
+            
+            drawHackerConnections();
+            drawMouseHackerConnections();
+            
+            if (Math.random() < 0.015) {
+                drawHackerClusterWords();
+            }
+            
+            requestAnimationFrame(animateSerpents);
+        }
+        
+        serpentCanvas.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+        
+        serpentCanvas.addEventListener('mouseleave', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+        
+        serpentCanvas.addEventListener('click', (e) => {
+            const clickX = e.clientX;
+            const clickY = e.clientY;
+            
+            // Draw immediate click flash
+            sCtx.beginPath();
+            sCtx.arc(clickX, clickY, 50, 0, Math.PI * 2);
+            sCtx.fillStyle = 'rgba(255, 0, 255, 0.3)';
+            sCtx.fill();
+            sCtx.strokeStyle = '#00ff00';
+            sCtx.lineWidth = 2;
+            sCtx.stroke();
+            
+            // Create STRONG radial wave effect
+            hackerStars.forEach(star => {
+                const dx = star.x - clickX;
+                const dy = star.y - clickY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 350) {
+                    // MUCH stronger push force
+                    const force = (350 - distance) / 350;
+                    const angle = Math.atan2(dy, dx);
+                    star.vx += Math.cos(angle) * force * 5; // Doubled force
+                    star.vy += Math.sin(angle) * force * 5;
+                    
+                    // Flip color in wave (magenta <-> green)
+                    const originalColor = star.color;
+                    
+                    setTimeout(() => {
+                        star.color = star.color === '#ff00ff' ? '#00ff00' : '#ff00ff';
+                        star.brightness = 1;
+                        star.radius = star.radius * 3; // Bigger scale
+                        
+                        setTimeout(() => {
+                            star.color = originalColor; // Restore color
+                            star.brightness = 0.5 + Math.random() * 0.5;
+                            star.radius = Math.random() * 2 + 1;
+                        }, 600);
+                    }, distance * 1.5); // Faster wave propagation
+                }
+            });
+            
+            // Spawn MANY stars at click radiating outward
+            for (let i = 0; i < 16; i++) {
+                const star = new HackerStar();
+                star.x = clickX;
+                star.y = clickY;
+                const angle = (Math.PI * 2 / 16) * i;
+                star.vx = Math.cos(angle) * 6; // Faster ejection
+                star.vy = Math.sin(angle) * 6;
+                star.brightness = 1;
+                hackerStars.push(star);
+            }
+            
+            // Add expanding ring effect
+            let ringRadius = 0;
+            const ringInterval = setInterval(() => {
+                ringRadius += 15;
+                
+                sCtx.beginPath();
+                sCtx.arc(clickX, clickY, ringRadius, 0, Math.PI * 2);
+                sCtx.strokeStyle = `rgba(0, 255, 0, ${1 - ringRadius/350})`;
+                sCtx.lineWidth = 2;
+                sCtx.stroke();
+                
+                sCtx.beginPath();
+                sCtx.arc(clickX, clickY, ringRadius - 5, 0, Math.PI * 2);
+                sCtx.strokeStyle = `rgba(255, 0, 255, ${1 - ringRadius/350})`;
+                sCtx.lineWidth = 2;
+                sCtx.stroke();
+                
+                if (ringRadius > 350) {
+                    clearInterval(ringInterval);
+                }
+            }, 30);
+            
+            // Remove oldest to maintain count
+            if (hackerStars.length > 250) {
+                hackerStars.splice(0, 16);
+            }
+        });
+        
+        window.addEventListener('resize', () => {
+            resizeSerpentCanvas();
+            initHackerStars();
+        });
+        
+        resizeSerpentCanvas();
+        initHackerStars();
+        animateSerpents();
+        
+        // ========================================
+        // TEXT SCRAMBLE FEATURE
+        // ========================================
+        let originalText = {};
+        let isScrambled = false;
+        
+        function scrambleText() {
+            const elements = document.querySelectorAll('p, h1, h2, h3, li, .feature-desc, .hero-text, .cta-text, .manifesto li');
+            
+            elements.forEach((el, index) => {
+                if (!isScrambled) {
+                    // Save original text
+                    originalText[index] = el.textContent;
+                    
+                    // Scramble: same length, random letters
+                    const scrambled = el.textContent
+                        .split('')
+                        .map(char => {
+                            if (char === ' ' || char === '\n') return char;
+                            if (char.match(/[a-z]/i)) {
+                                // Random lowercase letter
+                                return String.fromCharCode(97 + Math.floor(Math.random() * 26));
+                            }
+                            if (char.match(/[A-Z]/)) {
+                                // Random uppercase letter
+                                return String.fromCharCode(65 + Math.floor(Math.random() * 26));
+                            }
+                            return char; // Keep punctuation
+                        })
+                        .join('');
+                    
+                    el.textContent = scrambled;
+                } else {
+                    // Restore original
+                    el.textContent = originalText[index];
+                }
+            });
+            
+            isScrambled = !isScrambled;
+        }
+        
+        // Terminal command listener
+        const terminalInput = document.getElementById('terminal-input');
+        
+        if (terminalInput) {
+            terminalInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const cmd = terminalInput.value.trim().toLowerCase();
+                    
+                    if (cmd === 'jezabel init') {
+                        scrambleText();
+                        terminalInput.value = '';
+                        
+                        // Flash effect
+                        document.body.style.transition = 'opacity 0.1s';
+                        document.body.style.opacity = '0.5';
+                        setTimeout(() => {
+                            document.body.style.opacity = '1';
+                        }, 100);
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
