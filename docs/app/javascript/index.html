@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Ripple - Tu Primer Programa JavaScript</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0a0a0a;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ff00;
+            min-height: 100vh;
+        }
+        
+        .header {
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border-bottom: 2px solid #00ff00;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            text-shadow: 0 0 10px #00ff00;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 0.9rem;
+            color: #00aa00;
+        }
+        
+        #console {
+            position: fixed;
+            top: 120px;
+            left: 10px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #00ff00;
+            max-height: 300px;
+            min-width: 400px;
+            overflow-y: auto;
+            font-size: 12px;
+            z-index: 1000;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+        
+        .console-title {
+            color: #00ff00;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #00ff00;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 3px;
+        }
+        
+        .log-timestamp {
+            color: #00aa00;
+        }
+        
+        .log-message {
+            color: #00ff00;
+        }
+        
+        .log-important {
+            color: #ffff00;
+            font-weight: bold;
+        }
+        
+        .controls {
+            position: fixed;
+            top: 120px;
+            right: 10px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #00ff00;
+            z-index: 1000;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+        
+        .controls h3 {
+            color: #00ff00;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .control-group {
+            margin: 15px 0;
+        }
+        
+        .control-group label {
+            display: block;
+            color: #00aa00;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+        }
+        
+        .control-group input[type="range"] {
+            width: 100%;
+        }
+        
+        .control-group button {
+            background: transparent;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+            width: 100%;
+            margin: 5px 0;
+        }
+        
+        .control-group button:hover {
+            background: #00ff00;
+            color: #0a0a0a;
+        }
+        
+        .color-option {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            margin: 5px;
+            border: 2px solid #333;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .color-option:hover,
+        .color-option.active {
+            border-color: #00ff00;
+            transform: scale(1.2);
+        }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(20, 40px);
+            gap: 5px;
+            padding: 50px;
+            justify-content: center;
+            margin-top: 80px;
+        }
+        
+        .square {
+            width: 40px;
+            height: 40px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .square:hover {
+            border-color: #00ff00;
+        }
+        
+        #console::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #console::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+        
+        #console::-webkit-scrollbar-thumb {
+            background: #00ff00;
+            border-radius: 4px;
+        }
+        
+        @media (max-width: 1024px) {
+            #console,
+            .controls {
+                position: static;
+                margin: 10px;
+            }
+            
+            .grid-container {
+                grid-template-columns: repeat(10, 40px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌊 Interactive Ripple Algorithm 🌊</h1>
+        <p>Tu Primer Programa JavaScript - Distance-Based Propagation</p>
+        <p style="font-size: 0.8rem; margin-top: 10px;">Click anywhere on the grid to create a ripple effect</p>
+    </div>
+    
+    <div id="console">
+        <div class="console-title">📊 CONSOLE LOG</div>
+        <div id="console-content"></div>
+    </div>
+    
+    <div class="controls">
+        <h3>⚙️ CONTROLS</h3>
+        
+        <div class="control-group">
+            <label>Speed: <span id="speed-value">50</span>ms</label>
+            <input type="range" id="speed-slider" min="10" max="150" value="50" step="10">
+        </div>
+        
+        <div class="control-group">
+            <label>Animation Duration: <span id="duration-value">400</span>ms</label>
+            <input type="range" id="duration-slider" min="200" max="1000" value="400" step="100">
+        </div>
+        
+        <div class="control-group">
+            <label>Scale: <span id="scale-value">1.3</span>x</label>
+            <input type="range" id="scale-slider" min="1.1" max="2.0" value="1.3" step="0.1">
+        </div>
+        
+        <div class="control-group">
+            <label>Color Palette:</label>
+            <div id="color-palette">
+                <div class="color-option active" style="background: #ff0000" data-color="#ff0000"></div>
+                <div class="color-option" style="background: #00ff00" data-color="#00ff00"></div>
+                <div class="color-option" style="background: #0000ff" data-color="#0000ff"></div>
+                <div class="color-option" style="background: #ffff00" data-color="#ffff00"></div>
+                <div class="color-option" style="background: #ff00ff" data-color="#ff00ff"></div>
+                <div class="color-option" style="background: #00ffff" data-color="#00ffff"></div>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <button id="random-ripple">🎲 Random Ripple</button>
+            <button id="clear-log">🗑️ Clear Log</button>
+            <button id="reset-grid">🔄 Reset Grid</button>
+        </div>
+    </div>
+    
+    <div class="grid-container" id="grid"></div>
+    
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        let config = {
+            speed: 50,           // delay multiplier
+            duration: 400,       // animation duration
+            scale: 1.3,          // scale factor
+            selectedColor: '#ff0000'
+        };
+        
+        // ============================================
+        // LOGGING SYSTEM
+        // ============================================
+        function log(message, isImportant = false) {
+            const consoleContent = document.getElementById('console-content');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            
+            entry.innerHTML = `
+                <span class="log-timestamp">[${timestamp}]</span> 
+                <span class="${isImportant ? 'log-important' : 'log-message'}">${message}</span>
+            `;
+            
+            consoleContent.appendChild(entry);
+            consoleContent.scrollTop = consoleContent.scrollHeight;
+            
+            // Keep only last 50 entries
+            while (consoleContent.children.length > 50) {
+                consoleContent.removeChild(consoleContent.firstChild);
+            }
+        }
+        
+        log('✓ Program initialized', true);
+        log('💡 Algorithm: Distance-Based Ripple Propagation');
+        
+        // ============================================
+        // CREATE GRID
+        // ============================================
+        const grid = document.getElementById('grid');
+        const squares = [];
+        const rows = 10;
+        const cols = 20;
+        
+        for (let row = 0; row < rows; row++) {
+            for (let col = 0; col < cols; col++) {
+                const square = document.createElement('div');
+                square.className = 'square';
+                square.dataset.row = row;
+                square.dataset.col = col;
+                grid.appendChild(square);
+                squares.push(square);
+            }
+        }
+        
+        log(`✓ Grid created: ${rows} rows × ${cols} cols = ${squares.length} squares`);
+        
+        // ============================================
+        // DISTANCE FORMULA (Pythagorean Theorem)
+        // ============================================
+        function calculateDistance(x1, y1, x2, y2) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            return distance;
+        }
+        
+        log('✓ Distance function ready: √(dx² + dy²)');
+        
+        // ============================================
+        // RIPPLE ALGORITHM (THE CORE)
+        // ============================================
+        function createRipple(clickX, clickY) {
+            log(`🖱️ Click detected at screen (${clickX}, ${clickY})`, true);
+            
+            // Convert click position to grid coordinates
+            const rect = grid.getBoundingClientRect();
+            const gridX = clickX - rect.left;
+            const gridY = clickY - rect.top;
+            
+            const squareSize = 45; // 40px + 5px gap
+            const clickCol = Math.floor(gridX / squareSize);
+            const clickRow = Math.floor(gridY / squareSize);
+            
+            log(`📍 Grid position: row=${clickRow}, col=${clickCol}`);
+            
+            // Validate click is inside grid
+            if (clickCol < 0 || clickCol >= cols || clickRow < 0 || clickRow >= rows) {
+                log('⚠️ Click outside grid bounds');
+                return;
+            }
+            
+            const rippleColor = config.selectedColor;
+            log(`🎨 Ripple color: ${rippleColor}`);
+            
+            let maxDistance = 0;
+            
+            // Loop through all squares
+            squares.forEach((square) => {
+                const squareRow = parseInt(square.dataset.row);
+                const squareCol = parseInt(square.dataset.col);
+                
+                // Calculate distance using Pythagorean theorem
+                const distance = calculateDistance(
+                    clickCol, clickRow,
+                    squareCol, squareRow
+                );
+                
+                maxDistance = Math.max(maxDistance, distance);
+                
+                // Calculate delay based on distance
+                const delay = distance * config.speed;
+                
+                // Animate square after delay
+                setTimeout(() => {
+                    // ANIMATE
+                    square.style.background = rippleColor;
+                    square.style.transform = `scale(${config.scale}) rotate(15deg)`;
+                    square.style.borderColor = rippleColor;
+                    square.style.boxShadow = `0 0 10px ${rippleColor}`;
+                    
+                    // RESET after duration
+                    setTimeout(() => {
+                        square.style.background = '#1a1a1a';
+                        square.style.transform = 'scale(1) rotate(0deg)';
+                        square.style.borderColor = '#333';
+                        square.style.boxShadow = 'none';
+                    }, config.duration);
+                    
+                }, delay);
+            });
+            
+            log(`🌊 Ripple propagating... max distance: ${maxDistance.toFixed(2)}`);
+            log(`⏱️ Total animation time: ${(maxDistance * config.speed + config.duration).toFixed(0)}ms`);
+        }
+        
+        // ============================================
+        // CLICK LISTENER
+        // ============================================
+        document.addEventListener('click', (event) => {
+            createRipple(event.clientX, event.clientY);
+        });
+        
+        log('✓ Click listener active', true);
+        log('👆 Click anywhere on the grid to start!', true);
+        
+        // ============================================
+        // CONTROLS
+        // ============================================
+        
+        // Speed slider
+        const speedSlider = document.getElementById('speed-slider');
+        const speedValue = document.getElementById('speed-value');
+        speedSlider.addEventListener('input', (e) => {
+            config.speed = parseInt(e.target.value);
+            speedValue.textContent = config.speed;
+            log(`⚙️ Speed changed to ${config.speed}ms`);
+        });
+        
+        // Duration slider
+        const durationSlider = document.getElementById('duration-slider');
+        const durationValue = document.getElementById('duration-value');
+        durationSlider.addEventListener('input', (e) => {
+            config.duration = parseInt(e.target.value);
+            durationValue.textContent = config.duration;
+            log(`⚙️ Duration changed to ${config.duration}ms`);
+        });
+        
+        // Scale slider
+        const scaleSlider = document.getElementById('scale-slider');
+        const scaleValue = document.getElementById('scale-value');
+        scaleSlider.addEventListener('input', (e) => {
+            config.scale = parseFloat(e.target.value);
+            scaleValue.textContent = config.scale;
+            log(`⚙️ Scale changed to ${config.scale}x`);
+        });
+        
+        // Color palette
+        const colorOptions = document.querySelectorAll('.color-option');
+        colorOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                colorOptions.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                config.selectedColor = option.dataset.color;
+                log(`🎨 Color changed to ${config.selectedColor}`);
+            });
+        });
+        
+        // Random ripple button
+        document.getElementById('random-ripple').addEventListener('click', () => {
+            const randomCol = Math.floor(Math.random() * cols);
+            const randomRow = Math.floor(Math.random() * rows);
+            
+            const rect = grid.getBoundingClientRect();
+            const clickX = rect.left + (randomCol * 45) + 20;
+            const clickY = rect.top + (randomRow * 45) + 20;
+            
+            createRipple(clickX, clickY);
+        });
+        
+        // Clear log button
+        document.getElementById('clear-log').addEventListener('click', () => {
+            document.getElementById('console-content').innerHTML = '';
+            log('✓ Log cleared', true);
+        });
+        
+        // Reset grid button
+        document.getElementById('reset-grid').addEventListener('click', () => {
+            squares.forEach(square => {
+                square.style.background = '#1a1a1a';
+                square.style.transform = 'scale(1) rotate(0deg)';
+                square.style.borderColor = '#333';
+                square.style.boxShadow = 'none';
+            });
+            log('✓ Grid reset', true);
+        });
+        
+        log('✓ All controls initialized');
+        
+        // ============================================
+        // EDUCATIONAL LOGGING
+        // ============================================
+        
+        // Log algorithm steps on first click
+        let firstClick = true;
+        const originalCreateRipple = createRipple;
+        
+        createRipple = function(clickX, clickY) {
+            if (firstClick) {
+                log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', true);
+                log('📚 ALGORITHM BREAKDOWN:', true);
+                log('1. Detect click position (x, y)');
+                log('2. Convert to grid coordinates (row, col)');
+                log('3. Loop through all squares');
+                log('4. Calculate distance using √(dx² + dy²)');
+                log('5. Set delay = distance × speed');
+                log('6. Animate each square after its delay');
+                log('7. Reset square after duration');
+                log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', true);
+                firstClick = false;
+            }
+            
+            originalCreateRipple(clickX, clickY);
+        };
+        
+        // ============================================
+        // KEYBOARD SHORTCUTS
+        // ============================================
+        document.addEventListener('keypress', (event) => {
+            if (event.key === 'r' || event.key === 'R') {
+                document.getElementById('random-ripple').click();
+            }
+            if (event.key === 'c' || event.key === 'C') {
+                document.getElementById('clear-log').click();
+            }
+        });
+        
+        log('⌨️ Keyboard shortcuts: R = random ripple, C = clear log');
+        
+        // ============================================
+        // WELCOME MESSAGE
+        // ============================================
+        setTimeout(() => {
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', true);
+            log('🎓 WELCOME TO INTERACTIVE RIPPLE!', true);
+            log('This demonstrates distance-based propagation', true);
+            log('The same algorithm powers all 7 sites:', true);
+            log('blendStory, jezabel, storiesbyjez, ModUrWall...', true);
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', true);
+        }, 1000);
+    </script>
+</body>
+</html>
