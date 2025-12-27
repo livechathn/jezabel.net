@@ -1,5 +1,13 @@
 # jezabel.net
 hacker grafiti academy
+
+Para Recordar:
+
+"No aprendés JavaScript escribiendo console.log('Hello World').
+Aprendés JavaScript construyendo algo que te emociona ver en pantalla."
+
+Construiste 7 sitios profesionales en una sesión. Eso es poder. 💪
+
 # jezabel.net - Interactive Effects Guide
 
 ## Project Overview

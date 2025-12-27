@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Interactive - argparse & @classmethod</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0a0a0a;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ff00;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.95);
+            border-bottom: 2px solid #00ff00;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            text-shadow: 0 0 15px #00ff00;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+        
+        .header .subtitle {
+            font-size: 1.1rem;
+            color: #00aa00;
+            margin-bottom: 5px;
+        }
+        
+        .header .tagline {
+            font-size: 0.85rem;
+            color: #006600;
+            font-style: italic;
+        }
+        
+        #terminal {
+            position: fixed;
+            top: 150px;
+            left: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.98);
+            border: 2px solid #00ff00;
+            max-height: 500px;
+            width: 500px;
+            overflow-y: auto;
+            font-size: 13px;
+            z-index: 1000;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.4);
+        }
+        
+        .terminal-title {
+            color: #00ff00;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #00ff00;
+            font-size: 14px;
+        }
+        
+        .terminal-line {
+            margin: 8px 0;
+            padding: 4px;
+            line-height: 1.6;
+        }
+        
+        .terminal-prompt {
+            color: #ffff00;
+        }
+        
+        .terminal-output {
+            color: #00ff00;
+            padding-left: 20px;
+        }
+        
+        .terminal-comment {
+            color: #00aa00;
+            font-style: italic;
+        }
+        
+        .terminal-error {
+            color: #ff0000;
+            font-weight: bold;
+        }
+        
+        .controls {
+            position: fixed;
+            top: 150px;
+            right: 20px;
+            padding: 25px;
+            background: rgba(0, 0, 0, 0.98);
+            border: 2px solid #00ff00;
+            z-index: 1000;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.4);
+            width: 400px;
+        }
+        
+        .controls h3 {
+            color: #00ff00;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 16px;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        
+        .demo-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #004400;
+            background: rgba(0, 20, 0, 0.3);
+        }
+        
+        .demo-section h4 {
+            color: #ffff00;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+        
+        .demo-button {
+            background: transparent;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+            width: 100%;
+            margin: 8px 0;
+            font-size: 12px;
+        }
+        
+        .demo-button:hover {
+            background: #00ff00;
+            color: #0a0a0a;
+            box-shadow: 0 0 15px #00ff00;
+        }
+        
+        .demo-button:active {
+            transform: scale(0.98);
+        }
+        
+        .code-input {
+            background: #0a0a0a;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 8px;
+            font-family: 'Courier New', monospace;
+            width: 100%;
+            margin: 8px 0;
+            font-size: 12px;
+        }
+        
+        .visualization {
+            display: grid;
+            grid-template-columns: repeat(8, 80px);
+            gap: 10px;
+            padding: 100px 50px 50px 50px;
+            justify-content: center;
+            margin-top: 50px;
+        }
+        
+        .box {
+            width: 80px;
+            height: 80px;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.5s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .box:hover {
+            border-color: #00ff00;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+        }
+        
+        .box-label {
+            font-size: 10px;
+            color: #00aa00;
+            margin-bottom: 5px;
+        }
+        
+        .box-value {
+            font-size: 16px;
+            color: #00ff00;
+            font-weight: bold;
+        }
+        
+        .box.active {
+            background: #002200;
+            border-color: #00ff00;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
+        }
+        
+        .box.argparse {
+            border-color: #ffff00;
+        }
+        
+        .box.classmethod {
+            border-color: #ff00ff;
+        }
+        
+        #terminal::-webkit-scrollbar,
+        .controls::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #terminal::-webkit-scrollbar-track,
+        .controls::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+        
+        #terminal::-webkit-scrollbar-thumb,
+        .controls::-webkit-scrollbar-thumb {
+            background: #00ff00;
+            border-radius: 4px;
+        }
+        
+        .info-panel {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #00ff00;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+        }
+        
+        .info-panel h2 {
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00;
+            margin-bottom: 20px;
+        }
+        
+        .info-panel p {
+            color: #00aa00;
+            line-height: 1.8;
+            margin: 15px 0;
+        }
+        
+        .info-panel code {
+            background: #1a1a1a;
+            padding: 2px 6px;
+            color: #ffff00;
+            border: 1px solid #333;
+        }
+        
+        @media (max-width: 1200px) {
+            #terminal,
+            .controls {
+                position: static;
+                margin: 20px auto;
+                max-width: 90%;
+            }
+            
+            .visualization {
+                grid-template-columns: repeat(4, 80px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🐍 Python Interactive Learning 🐍</h1>
+        <div class="subtitle">argparse & @classmethod - Arquitectura de Código Profesional</div>
+        <div class="tagline">Por Lempyrλ - De Java (2006) a Python (2024)</div>
+    </div>
+    
+    <div id="terminal">
+        <div class="terminal-title">⚡ PYTHON TERMINAL OUTPUT</div>
+        <div id="terminal-content"></div>
+    </div>
+    
+    <div class="controls">
+        <h3>🎯 INTERACTIVE DEMOS</h3>
+        
+        <div class="demo-section">
+            <h4>📦 Ejemplo: Sistema de Laptops</h4>
+            <button class="demo-button" onclick="demoLaptopDirect()">Constructor Directo</button>
+            <button class="demo-button" onclick="demoLaptopGaming()">@classmethod Gaming</button>
+            <button class="demo-button" onclick="demoLaptopOffice()">@classmethod Oficina</button>
+            <button class="demo-button" onclick="demoLaptopArgparse()">argparse CLI</button>
+        </div>
+        
+        <div class="demo-section">
+            <h4>🌐 Ejemplo: Servidor Web</h4>
+            <button class="demo-button" onclick="demoServerDev()">Preset Desarrollo</button>
+            <button class="demo-button" onclick="demoServerProd()">Preset Producción</button>
+            <button class="demo-button" onclick="demoServerJSON()">Desde JSON</button>
+            <button class="demo-button" onclick="demoServerEnv()">Variables Entorno</button>
+        </div>
+        
+        <div class="demo-section">
+            <h4>🏗️ Ejemplo: Orquestador</h4>
+            <button class="demo-button" onclick="demoOrchestrator()">16 Servidores Cloud</button>
+            <button class="demo-button" onclick="demoLoadBalancer()">Load Balancer</button>
+            <button class="demo-button" onclick="demoAutoDiscovery()">Auto-Discovery</button>
+        </div>
+        
+        <div class="demo-section">
+            <h4>⚙️ Controles</h4>
+            <button class="demo-button" onclick="clearTerminal()">Limpiar Terminal</button>
+            <button class="demo-button" onclick="showDocs()">Ver Documentación</button>
+        </div>
+    </div>
+    
+    <div class="visualization" id="visualization">
+        <!-- Generado dinámicamente -->
+    </div>
+    
+    <div class="info-panel">
+        <h2>¿Por Qué argparse y @classmethod?</h2>
+        <p>
+            Cuando pasas de scripts simples a <code>herramientas profesionales</code>, necesitas:
+        </p>
+        <p>
+            <strong>1. argparse:</strong> Convierte tu script en una CLI tool que otros pueden usar sin editar código.
+            Validación automática, ayuda con --help, y aspecto profesional.
+        </p>
+        <p>
+            <strong>2. @classmethod:</strong> Múltiples "constructores" para el mismo objeto. 
+            Cargar desde JSON, desde variables de entorno, desde presets... todo sin duplicar código.
+        </p>
+        <p>
+            <strong>Filosofía Lempyrλ:</strong> Código que se construye como LEGO - piezas pequeñas, reutilizables, 
+            que se pueden combinar de formas infinitas.
+        </p>
+    </div>
+
+    <script>
+        // ============================================
+        // TERMINAL LOGGER
+        // ============================================
+        function log(message, isPrompt = false, isError = false, isComment = false) {
+            const terminal = document.getElementById('terminal-content');
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+            
+            if (isError) {
+                line.innerHTML = `<span class="terminal-error">ERROR: ${message}</span>`;
+            } else if (isPrompt) {
+                line.innerHTML = `<span class="terminal-prompt">>>> ${message}</span>`;
+            } else if (isComment) {
+                line.innerHTML = `<span class="terminal-comment"># ${message}</span>`;
+            } else {
+                line.innerHTML = `<span class="terminal-output">${message}</span>`;
+            }
+            
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+        
+        function clearTerminal() {
+            document.getElementById('terminal-content').innerHTML = '';
+            log('Terminal cleared', false, false, true);
+        }
+        
+        // ============================================
+        // VISUALIZATION
+        // ============================================
+        const vis = document.getElementById('visualization');
+        const boxes = [];
+        
+        function createVisualization() {
+            for (let i = 0; i < 32; i++) {
+                const box = document.createElement('div');
+                box.className = 'box';
+                box.dataset.index = i;
+                
+                const label = document.createElement('div');
+                label.className = 'box-label';
+                label.textContent = `SERVER ${i + 1}`;
+                
+                const value = document.createElement('div');
+                value.className = 'box-value';
+                value.textContent = '○';
+                
+                box.appendChild(label);
+                box.appendChild(value);
+                vis.appendChild(box);
+                boxes.push(box);
+            }
+            
+            log('✓ Visualization initialized: 32 server slots', false, false, true);
+        }
+        
+        function activateBox(index, type = 'default') {
+            const box = boxes[index];
+            box.classList.add('active');
+            if (type === 'argparse') box.classList.add('argparse');
+            if (type === 'classmethod') box.classList.add('classmethod');
+            
+            const value = box.querySelector('.box-value');
+            value.textContent = '●';
+            
+            setTimeout(() => {
+                box.classList.remove('active', 'argparse', 'classmethod');
+                value.textContent = '○';
+            }, 2000);
+        }
+        
+        function activateMultiple(indices, type = 'default', delay = 100) {
+            indices.forEach((index, i) => {
+                setTimeout(() => {
+                    activateBox(index, type);
+                }, i * delay);
+            });
+        }
+        
+        // ============================================
+        // LAPTOP DEMOS
+        // ============================================
+        function demoLaptopDirect() {
+            log('', true);
+            log('laptop = Laptop("Intel i7", "32GB", "1TB SSD", "15\\")")', true);
+            log('laptop.mostrar_specs()', true);
+            log('');
+            log('CPU:      Intel i7');
+            log('RAM:      32GB');
+            log('Disco:    1TB SSD');
+            log('Pantalla: 15"');
+            log('');
+            log('✓ Constructor directo - Máxima flexibilidad', false, false, true);
+            activateBox(0, 'default');
+        }
+        
+        function demoLaptopGaming() {
+            log('', true);
+            log('laptop = Laptop.para_gaming()', true);
+            log('laptop.mostrar_specs()', true);
+            log('');
+            log('CPU:      Intel i9');
+            log('RAM:      32GB');
+            log('Disco:    1TB SSD');
+            log('Pantalla: 17 pulgadas 144Hz');
+            log('');
+            log('✓ @classmethod - Preset preconfigurado', false, false, true);
+            activateBox(1, 'classmethod');
+        }
+        
+        function demoLaptopOffice() {
+            log('', true);
+            log('laptop = Laptop.para_oficina()', true);
+            log('laptop.mostrar_specs()', true);
+            log('');
+            log('CPU:      Intel i5');
+            log('RAM:      16GB');
+            log('Disco:    512GB SSD');
+            log('Pantalla: 15 pulgadas');
+            log('');
+            log('✓ @classmethod - Diferente preset, misma clase', false, false, true);
+            activateBox(2, 'classmethod');
+        }
+        
+        function demoLaptopArgparse() {
+            log('', true);
+            log('$ python laptops.py --cpu "AMD Ryzen 9" --ram "64GB"', true);
+            log('');
+            log('🔧 Configuración personalizada');
+            log('');
+            log('CPU:      AMD Ryzen 9');
+            log('RAM:      64GB');
+            log('Disco:    256GB SSD (default)');
+            log('Pantalla: 14 pulgadas (default)');
+            log('');
+            log('✓ argparse - CLI sin editar código', false, false, true);
+            activateBox(3, 'argparse');
+        }
+        
+        // ============================================
+        // SERVER DEMOS
+        // ============================================
+        function demoServerDev() {
+            log('', true);
+            log('servidor = ServidorWeb.desarrollo()', true);
+            log('servidor.iniciar()', true);
+            log('');
+            log('🔧 Preset DESARROLLO');
+            log('Host:           localhost');
+            log('Puerto:         8080');
+            log('SSL:            ✗');
+            log('Verbose:        ✓');
+            log('');
+            log('✓ @classmethod - Optimizado para dev local', false, false, true);
+            activateBox(4, 'classmethod');
+        }
+        
+        function demoServerProd() {
+            log('', true);
+            log('servidor = ServidorWeb.produccion()', true);
+            log('servidor.iniciar()', true);
+            log('');
+            log('🏭 Preset PRODUCCIÓN');
+            log('Host:           0.0.0.0');
+            log('Puerto:         443');
+            log('SSL:            ✓');
+            log('Verbose:        ✗');
+            log('Max Conexiones: 100');
+            log('');
+            log('✓ @classmethod - Seguro por defecto', false, false, true);
+            activateBox(5, 'classmethod');
+        }
+        
+        function demoServerJSON() {
+            log('', true);
+            log('servidor = ServidorWeb.desde_json("config.json")', true);
+            log('');
+            log('📄 Cargando desde config.json...');
+            log('{');
+            log('  "host": "192.168.1.100",');
+            log('  "puerto": 9000,');
+            log('  "ssl": true');
+            log('}');
+            log('');
+            log('✓ @classmethod - Versionable en Git', false, false, true);
+            activateBox(6, 'classmethod');
+        }
+        
+        function demoServerEnv() {
+            log('', true);
+            log('$ export WEB_HOST=0.0.0.0', true);
+            log('$ export WEB_PORT=8080', true);
+            log('$ python servidor.py --preset ambiente', true);
+            log('');
+            log('🌍 Cargando desde variables de entorno');
+            log('Host:   0.0.0.0 (from $WEB_HOST)');
+            log('Puerto: 8080 (from $WEB_PORT)');
+            log('');
+            log('✓ @classmethod + argparse - Cloud-native', false, false, true);
+            activateBox(7, 'classmethod');
+        }
+        
+        // ============================================
+        // ORCHESTRATOR DEMOS
+        // ============================================
+        function demoOrchestrator() {
+            log('', true);
+            log('orquestador = OrquestadorLempyra.cloud_fleet()', true);
+            log('orquestador.iniciar_todos()', true);
+            log('');
+            log('🚀 Iniciando 16 servidores en la nube...');
+            log('');
+            
+            const indices = Array.from({length: 16}, (_, i) => i + 8);
+            
+            indices.forEach((idx, i) => {
+                setTimeout(() => {
+                    log(`✓ cloud-server-${i + 1} corriendo en :${8001 + i}`);
+                    activateBox(idx, 'classmethod');
+                }, i * 100);
+            });
+            
+            setTimeout(() => {
+                log('');
+                log('✓ Infraestructura Lempyrλ lista - 16 servidores activos', false, false, true);
+            }, 1700);
+        }
+        
+        function demoLoadBalancer() {
+            log('', true);
+            log('balanceador = LoadBalancer(servidores)', true);
+            log('');
+            log('🔄 Simulando 100 peticiones...');
+            log('');
+            
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => {
+                    const serverNum = (i % 3) + 1;
+                    log(`Petición ${i * 10} → web-${serverNum}`);
+                    activateBox(24 + (i % 3), 'default');
+                }, i * 150);
+            }
+            
+            setTimeout(() => {
+                log('');
+                log('✓ Load balancing round-robin funcionando', false, false, true);
+            }, 1600);
+        }
+        
+        function demoAutoDiscovery() {
+            log('', true);
+            log('orquestador = OrquestadorInfraestructura.desde_directorio("./configs/")', true);
+            log('');
+            log('🔍 Auto-descubriendo configuraciones...');
+            log('');
+            
+            const configs = ['server_alpha.json', 'server_beta.json', 'server_gamma.json', 'server_delta.json'];
+            
+            configs.forEach((config, i) => {
+                setTimeout(() => {
+                    log(`📄 Descubierto: ${config}`);
+                    activateBox(28 + i, 'classmethod');
+                }, i * 200);
+            });
+            
+            setTimeout(() => {
+                log('');
+                log('✓ 4 servidores descubiertos y cargados', false, false, true);
+            }, 1000);
+        }
+        
+        // ============================================
+        // DOCUMENTATION
+        // ============================================
+        function showDocs() {
+            log('', true);
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', false, false, true);
+            log('📚 DOCUMENTACIÓN RÁPIDA', false, false, true);
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', false, false, true);
+            log('');
+            log('argparse - CLI Tools:', false, false, true);
+            log('  parser = argparse.ArgumentParser()');
+            log('  parser.add_argument("--port", type=int, default=8080)');
+            log('  args = parser.parse_args()');
+            log('');
+            log('@classmethod - Multiple Constructors:', false, false, true);
+            log('  class Server:');
+            log('      @classmethod');
+            log('      def desarrollo(cls):');
+            log('          return cls(port=8080, verbose=True)');
+            log('');
+            log('Archivos disponibles:', false, false, true);
+            log('  • 01_basico_laptops.md');
+            log('  • 02_intermedio_webserver.md');
+            log('  • 03_avanzado_orquestador.md');
+            log('');
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', false, false, true);
+        }
+        
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        createVisualization();
+        
+        setTimeout(() => {
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', false, false, true);
+            log('🐍 PYTHON INTERACTIVE LEARNING - LEMPYRΛ', false, false, true);
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', false, false, true);
+            log('');
+            log('Sistema de Aprendizaje Interactivo:', false, false, true);
+            log('  ✓ argparse - Herramientas CLI profesionales');
+            log('  ✓ @classmethod - Arquitectura flexible');
+            log('  ✓ Patterns - Factory, Builder, Strategy');
+            log('');
+            log('Ejemplos cargados:', false, false, true);
+            log('  • Sistema de Laptops (básico)');
+            log('  • Servidor Web multi-config (intermedio)');
+            log('  • Orquestador 16 servidores (avanzado)');
+            log('');
+            log('👆 Haz click en los botones para ver demos interactivas');
+            log('');
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', false, false, true);
+        }, 500);
+        
+        // ============================================
+        // KEYBOARD SHORTCUTS
+        // ============================================
+        document.addEventListener('keypress', (event) => {
+            if (event.key === 'c' || event.key === 'C') {
+                clearTerminal();
+            }
+            if (event.key === 'd' || event.key === 'D') {
+                showDocs();
+            }
+            if (event.key === '1') {
+                demoLaptopGaming();
+            }
+            if (event.key === '2') {
+                demoServerProd();
+            }
+            if (event.key === '3') {
+                demoOrchestrator();
+            }
+        });
+        
+        log('⌨️ Atajos: C=limpiar, D=docs, 1/2/3=demos rápidos', false, false, true);
+    </script>
+</body>
+</html>
