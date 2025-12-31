@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raspberry Pi Swap - jezabel.net</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0d0015;
+            --fg: #f0e0ff;
+            --accent: #ff00ff;
+            --dim: #7a4a7a;
+            --darker: #050008;
+            --code-bg: #0a000f;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.6;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .serpent-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        #serpent-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            flex: 1;
+        }
+
+        header {
+            margin-bottom: 4rem;
+            border-bottom: 1px solid var(--dim);
+            padding-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 300;
+            letter-spacing: -2px;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+            text-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+        }
+
+        .tagline {
+            color: var(--dim);
+            font-size: 1.1rem;
+        }
+
+        .hero {
+            margin-bottom: 3rem;
+            background: var(--darker);
+            border: 1px solid var(--dim);
+            padding: 2rem;
+            border-left: 3px solid var(--accent);
+        }
+
+        .hero-text {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            line-height: 1.8;
+        }
+
+        .stats-bar {
+            background: var(--code-bg);
+            border: 1px solid var(--accent);
+            padding: 1.5rem;
+            margin-bottom: 3rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1.5rem;
+            text-align: center;
+        }
+
+        .stat {
+            border-right: 1px solid var(--dim);
+        }
+
+        .stat:last-child {
+            border-right: none;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            color: var(--accent);
+            display: block;
+            margin-bottom: 0.3rem;
+            font-weight: 300;
+        }
+
+        .stat-label {
+            color: var(--dim);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            font-weight: 300;
+            text-shadow: 0 0 15px rgba(255, 0, 255, 0.2);
+        }
+
+        .section-subtitle {
+            font-size: 1.3rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            margin-top: 2rem;
+            font-weight: 300;
+        }
+
+        .section-content {
+            color: var(--fg);
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--accent);
+            border-left: 3px solid var(--accent);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: ">";
+            position: absolute;
+            left: 0.5rem;
+            top: 0.5rem;
+            color: var(--dim);
+            font-size: 0.8rem;
+        }
+
+        .code-block code {
+            color: #00ff00;
+            display: block;
+            padding-left: 1rem;
+        }
+
+        .command-list {
+            list-style: none;
+            counter-reset: cmd-counter;
+        }
+
+        .command-list li {
+            counter-increment: cmd-counter;
+            margin-bottom: 2rem;
+            padding-left: 3rem;
+            position: relative;
+        }
+
+        .command-list li::before {
+            content: counter(cmd-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: var(--accent);
+            color: var(--bg);
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            box-shadow: 0 0 15px rgba(255, 0, 255, 0.4);
+        }
+
+        .command-desc {
+            color: var(--dim);
+            font-size: 0.95rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .note-box {
+            background: rgba(255, 0, 255, 0.05);
+            border-left: 3px solid var(--accent);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            color: var(--fg);
+            border-right: 1px solid var(--dim);
+            border-top: 1px solid var(--dim);
+            border-bottom: 1px solid var(--dim);
+        }
+
+        .note-box strong {
+            color: var(--accent);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .warning-box {
+            background: rgba(255, 0, 0, 0.05);
+            border-left: 3px solid #ff0066;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            color: var(--fg);
+            border-right: 1px solid #ff0066;
+            border-top: 1px solid #ff0066;
+            border-bottom: 1px solid #ff0066;
+        }
+
+        .warning-box strong {
+            color: #ff0066;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .terminal-output {
+            background: #000;
+            border: 1px solid var(--dim);
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        .terminal-output pre {
+            color: #00ff00;
+            margin: 0;
+        }
+
+        .tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .tag {
+            background: var(--code-bg);
+            border: 1px solid var(--dim);
+            padding: 0.4rem 0.9rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+        }
+
+        footer {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--dim);
+            text-align: center;
+        }
+
+        .powered {
+            color: var(--dim);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .powered a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .powered a:hover {
+            text-shadow: 0 0 10px var(--accent);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .stats-bar {
+                grid-template-columns: 1fr;
+            }
+
+            .stat {
+                border-right: none;
+                border-bottom: 1px solid var(--dim);
+                padding-bottom: 1rem;
+            }
+
+            .stat:last-child {
+                border-bottom: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="serpent-background">
+        <canvas id="serpent-canvas"></canvas>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>raspberry pi swap</h1>
+            <p class="tagline">memory expansion for constrained systems</p>
+        </header>
+
+        <div class="hero">
+            <p class="hero-text">
+                by default, raspberry pi os doesn't configure swap space. this leaves your system vulnerable to 
+                oom (out of memory) kills when ram fills up. especially critical when running ollama models, 
+                databases, or multiple services simultaneously.
+            </p>
+            <p class="hero-text">
+                this guide configures a 2gb swap file with optimized swappiness settings to extend usable memory 
+                while protecting sd card longevity.
+            </p>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat">
+                <span class="stat-value">2GB</span>
+                <span class="stat-label">swap size</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value">10</span>
+                <span class="stat-label">swappiness</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value">Pi 4</span>
+                <span class="stat-label">tested on</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value">Ubuntu</span>
+                <span class="stat-label">24.04 LTS</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">/// the problem</h2>
+            <p class="section-content">
+                raspberry pi with 4gb ram runs out of memory when serving multiple ai models, web services, 
+                and background processes. without swap, the kernel oom-killer terminates processes randomly, 
+                causing service crashes and data loss.
+            </p>
+
+            <div class="terminal-output">
+                <pre>$ free -h
+               total        used        free      shared  buff/cache   available
+Mem:           3.7Gi       538Mi       2.1Gi       5.4Mi       1.2Gi       3.2Gi
+Swap:             0B          0B          0B    <span style="color: #ff0066;">← NO SWAP CONFIGURED</span></pre>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">/// the solution</h2>
+            <p class="section-content">
+                configure swap space to extend available memory. optimized swappiness prevents excessive sd card 
+                writes while providing emergency memory overflow capacity.
+            </p>
+
+            <ol class="command-list">
+                <li>
+                    <strong>create 2gb swap file</strong>
+                    <p class="command-desc">allocate 2gb of disk space for swap. uses fallocate for instant allocation.</p>
+                    <div class="code-block">
+                        <code>sudo fallocate -l 2G /swapfile</code>
+                    </div>
+                </li>
+
+                <li>
+                    <strong>set secure permissions</strong>
+                    <p class="command-desc">restrict swap file access to root only. critical security step.</p>
+                    <div class="code-block">
+                        <code>sudo chmod 600 /swapfile</code>
+                    </div>
+                </li>
+
+                <li>
+                    <strong>format as swap</strong>
+                    <p class="command-desc">mark file as swap space in the filesystem.</p>
+                    <div class="code-block">
+                        <code>sudo mkswap /swapfile</code>
+                    </div>
+                </li>
+
+                <li>
+                    <strong>activate swap</strong>
+                    <p class="command-desc">enable swap immediately without reboot.</p>
+                    <div class="code-block">
+                        <code>sudo swapon /swapfile</code>
+                    </div>
+                </li>
+
+                <li>
+                    <strong>verify activation</strong>
+                    <p class="command-desc">confirm swap is active and available.</p>
+                    <div class="code-block">
+                        <code>free -h</code>
+                    </div>
+                    <div class="terminal-output">
+                        <pre>               total        used        free      shared  buff/cache   available
+Mem:           3.7Gi       555Mi       2.1Gi       5.4Mi       1.2Gi       3.1Gi
+Swap:          2.0Gi          0B       2.0Gi    <span style="color: #00ff00;">← SWAP ACTIVE</span></pre>
+                    </div>
+                </li>
+
+                <li>
+                    <strong>make permanent</strong>
+                    <p class="command-desc">ensure swap persists across reboots by editing fstab.</p>
+                    <div class="code-block">
+                        <code>echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab</code>
+                    </div>
+                </li>
+
+                <li>
+                    <strong>optimize swappiness</strong>
+                    <p class="command-desc">set swappiness to 10 (default is 60). lower value = less aggressive swapping.</p>
+                    <div class="code-block">
+                        <code>sudo sysctl vm.swappiness=10</code>
+                    </div>
+                </li>
+
+                <li>
+                    <strong>make swappiness permanent</strong>
+                    <p class="command-desc">persist swappiness setting across reboots.</p>
+                    <div class="code-block">
+                        <code>echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.conf</code>
+                    </div>
+                </li>
+
+                <li>
+                    <strong>verify swappiness</strong>
+                    <p class="command-desc">confirm setting is applied.</p>
+                    <div class="code-block">
+                        <code>cat /proc/sys/vm/swappiness</code>
+                    </div>
+                    <div class="terminal-output">
+                        <pre>10</pre>
+                    </div>
+                </li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">/// understanding swappiness</h2>
+            
+            <h3 class="section-subtitle">what is swappiness?</h3>
+            <p class="section-content">
+                swappiness controls kernel's preference for swapping vs keeping data in ram. value range: 0-100.
+            </p>
+
+            <div class="note-box">
+                <strong>swappiness values:</strong>
+                <ul style="list-style: none; margin-top: 0.5rem;">
+                    <li><span style="color: var(--accent);">swappiness=0</span>  → avoid swapping unless absolutely necessary</li>
+                    <li><span style="color: var(--accent);">swappiness=10</span> → minimal swapping, prefer ram (recommended for pi)</li>
+                    <li><span style="color: var(--accent);">swappiness=60</span> → ubuntu default, moderate swapping</li>
+                    <li><span style="color: var(--accent);">swappiness=100</span> → aggressive swapping, prefer swap</li>
+                </ul>
+            </div>
+
+            <h3 class="section-subtitle">why swappiness=10 for raspberry pi?</h3>
+            <p class="section-content">
+                sd cards have limited write cycles. default swappiness=60 causes frequent writes, degrading card 
+                lifespan. swappiness=10 only swaps when ram is genuinely full, reducing writes by ~80%.
+            </p>
+
+            <div class="warning-box">
+                <strong>critical for sd card longevity:</strong>
+                without optimized swappiness, constant swap writes can kill sd cards in months. swappiness=10 
+                extends lifespan to years while still providing oom protection.
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">/// disk space check</h2>
+            <p class="section-content">
+                before creating swap, verify sufficient disk space. swap file requires contiguous space.
+            </p>
+
+            <div class="code-block">
+                <code>df -h /</code>
+            </div>
+
+            <div class="terminal-output">
+                <pre>Filesystem      Size  Used Avail Use% Mounted on
+/dev/mmcblk0p2   57G   17G   38G  31% /    <span style="color: #00ff00;">← 38GB FREE, SUFFICIENT</span></pre>
+            </div>
+
+            <div class="note-box">
+                <strong>minimum requirements:</strong>
+                ensure at least 3gb free space beyond swap size for system operations. for 2gb swap, need 5gb+ total free.
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">/// verification</h2>
+            <p class="section-content">
+                after setup, verify everything is configured correctly.
+            </p>
+
+            <h3 class="section-subtitle">check swap status</h3>
+            <div class="code-block">
+                <code>swapon --show</code>
+            </div>
+            <div class="terminal-output">
+                <pre>NAME      TYPE SIZE USED PRIO
+/swapfile file   2G   0B   -2</pre>
+            </div>
+
+            <h3 class="section-subtitle">check memory total</h3>
+            <div class="code-block">
+                <code>free -h</code>
+            </div>
+
+            <h3 class="section-subtitle">verify persistence</h3>
+            <div class="code-block">
+                <code>cat /etc/fstab | grep swap
+cat /proc/sys/vm/swappiness</code>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">/// technical notes</h2>
+
+            <div class="note-box">
+                <strong>why fallocate over dd?</strong>
+                fallocate is instant, dd takes minutes. both create valid swap files, but fallocate is preferred 
+                for speed and efficiency.
+            </div>
+
+            <div class="note-box">
+                <strong>swap size recommendations:</strong>
+                <ul style="list-style: none; margin-top: 0.5rem;">
+                    <li><span style="color: var(--accent);">4gb ram</span>  → 2gb swap (what we configured)</li>
+                    <li><span style="color: var(--accent);">8gb ram</span>  → 2-4gb swap</li>
+                    <li><span style="color: var(--accent);">16gb+ ram</span> → 4gb swap or less</li>
+                </ul>
+            </div>
+
+            <div class="warning-box">
+                <strong>swap is not ram replacement:</strong>
+                swap is 10-100x slower than ram. it prevents crashes but doesn't improve performance. 
+                if constantly using swap, upgrade ram instead.
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">/// troubleshooting</h2>
+
+            <h3 class="section-subtitle">swap not activating</h3>
+            <div class="code-block">
+                <code># check file permissions
+ls -l /swapfile
+
+# should show: -rw------- 1 root root
+# if not, run: sudo chmod 600 /swapfile</code>
+            </div>
+
+            <h3 class="section-subtitle">disk full error</h3>
+            <div class="code-block">
+                <code># check available space
+df -h /
+
+# if insufficient, reduce swap size or clean disk</code>
+            </div>
+
+            <h3 class="section-subtitle">remove swap</h3>
+            <div class="code-block">
+                <code># disable swap
+sudo swapoff /swapfile
+
+# remove file
+sudo rm /swapfile
+
+# remove from fstab
+sudo nano /etc/fstab  # delete swap line</code>
+            </div>
+        </div>
+
+        <div class="tags">
+            <span class="tag">raspberry pi</span>
+            <span class="tag">memory optimization</span>
+            <span class="tag">linux</span>
+            <span class="tag">swap</span>
+            <span class="tag">ubuntu</span>
+            <span class="tag">system tuning</span>
+        </div>
+
+    </div>
+
+    <footer>
+        <p class="powered">powered by <a href="https://lempyra.com">Lempyrλ</a></p>
+    </footer>
+    
+    <script>
+        const serpentCanvas = document.getElementById('serpent-canvas');
+        const sCtx = serpentCanvas.getContext('2d');
+        
+        let hackerStars = [];
+        let mouse = { x: null, y: null };
+        
+        const codeWords = ['swap', 'mem', 'ram', 'pi', 'init', 'sys', 'root', 'sudo', 'disk', 'free'];
+        
+        function resizeSerpentCanvas() {
+            serpentCanvas.width = window.innerWidth;
+            serpentCanvas.height = window.innerHeight;
+        }
+        
+        class HackerStar {
+            constructor() {
+                this.x = Math.random() * serpentCanvas.width;
+                this.y = Math.random() * serpentCanvas.height;
+                this.vx = (Math.random() - 0.5) * 0.8;
+                this.vy = (Math.random() - 0.5) * 0.8;
+                this.radius = Math.random() * 2 + 1;
+                this.brightness = 0.5 + Math.random() * 0.5;
+                this.color = Math.random() > 0.5 ? '#ff00ff' : '#00ff00';
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                if (this.x < 0 || this.x > serpentCanvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > serpentCanvas.height) this.vy *= -1;
+                
+                this.x = Math.max(0, Math.min(serpentCanvas.width, this.x));
+                this.y = Math.max(0, Math.min(serpentCanvas.height, this.y));
+            }
+            
+            draw() {
+                sCtx.beginPath();
+                sCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                sCtx.fillStyle = this.color + Math.floor(this.brightness * 255).toString(16).padStart(2, '0');
+                sCtx.fill();
+            }
+        }
+        
+        function initHackerStars() {
+            hackerStars = [];
+            for (let i = 0; i < 180; i++) {
+                hackerStars.push(new HackerStar());
+            }
+        }
+        
+        function drawHackerConnections() {
+            for (let i = 0; i < hackerStars.length; i++) {
+                for (let j = i + 1; j < hackerStars.length; j++) {
+                    const dx = hackerStars[i].x - hackerStars[j].x;
+                    const dy = hackerStars[i].y - hackerStars[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 120) {
+                        const opacity = (1 - distance / 120) * 0.3;
+                        sCtx.beginPath();
+                        sCtx.strokeStyle = hackerStars[i].color + Math.floor(opacity * 255).toString(16).padStart(2, '0');
+                        sCtx.lineWidth = 0.8;
+                        sCtx.moveTo(hackerStars[i].x, hackerStars[i].y);
+                        sCtx.lineTo(hackerStars[j].x, hackerStars[j].y);
+                        sCtx.stroke();
+                    }
+                }
+            }
+        }
+        
+        function drawMouseHackerConnections() {
+            if (mouse.x === null) return;
+            
+            hackerStars.forEach(star => {
+                const dx = mouse.x - star.x;
+                const dy = mouse.y - star.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 180) {
+                    const opacity = (1 - distance / 180) * 0.6;
+                    sCtx.beginPath();
+                    sCtx.strokeStyle = star.color + Math.floor(opacity * 255).toString(16).padStart(2, '0');
+                    sCtx.lineWidth = 1.5;
+                    sCtx.moveTo(mouse.x, mouse.y);
+                    sCtx.lineTo(star.x, star.y);
+                    sCtx.stroke();
+                }
+            });
+        }
+        
+        function animateSerpents() {
+            sCtx.fillStyle = 'rgba(13, 0, 21, 0.08)';
+            sCtx.fillRect(0, 0, serpentCanvas.width, serpentCanvas.height);
+            
+            hackerStars.forEach(star => {
+                star.update();
+                star.draw();
+            });
+            
+            drawHackerConnections();
+            drawMouseHackerConnections();
+            
+            requestAnimationFrame(animateSerpents);
+        }
+        
+        serpentCanvas.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+        
+        serpentCanvas.addEventListener('mouseleave', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+        
+        serpentCanvas.addEventListener('click', (e) => {
+            const clickX = e.clientX;
+            const clickY = e.clientY;
+            
+            hackerStars.forEach(star => {
+                const dx = star.x - clickX;
+                const dy = star.y - clickY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 350) {
+                    const force = (350 - distance) / 350;
+                    const angle = Math.atan2(dy, dx);
+                    star.vx += Math.cos(angle) * force * 5;
+                    star.vy += Math.sin(angle) * force * 5;
+                    
+                    const originalColor = star.color;
+                    
+                    setTimeout(() => {
+                        star.color = star.color === '#ff00ff' ? '#00ff00' : '#ff00ff';
+                        star.brightness = 1;
+                        star.radius = star.radius * 3;
+                        
+                        setTimeout(() => {
+                            star.color = originalColor;
+                            star.brightness = 0.5 + Math.random() * 0.5;
+                            star.radius = Math.random() * 2 + 1;
+                        }, 600);
+                    }, distance * 1.5);
+                }
+            });
+            
+            for (let i = 0; i < 16; i++) {
+                const star = new HackerStar();
+                star.x = clickX;
+                star.y = clickY;
+                const angle = (Math.PI * 2 / 16) * i;
+                star.vx = Math.cos(angle) * 6;
+                star.vy = Math.sin(angle) * 6;
+                star.brightness = 1;
+                hackerStars.push(star);
+            }
+            
+            if (hackerStars.length > 250) {
+                hackerStars.splice(0, 16);
+            }
+        });
+        
+        window.addEventListener('resize', () => {
+            resizeSerpentCanvas();
+            initHackerStars();
+        });
+        
+        resizeSerpentCanvas();
+        initHackerStars();
+        animateSerpents();
+    </script>
+</body>
+</html>
