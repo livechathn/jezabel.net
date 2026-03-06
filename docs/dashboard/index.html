@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://sar1a.lempyra.com; font-src 'self' https://fonts.gstatic.com; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;">
+<title>jezabel.net — codex</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&display=swap">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#050008;--bg2:#080010;--bg3:#0d0018;
+  --mg:#ff00ff;--mg2:#cc00cc;--gr:#00ff41;--cy:#00ccff;
+  --fg:#e8d8ff;--dim:#3a1a4a;--border:#1a0828;
+  --warn:#cc6600;
+}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--fg);display:flex;flex-direction:column;}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.06) 3px,rgba(0,0,0,.06) 4px);pointer-events:none;z-index:9000;}
+
+/* ─ STATUSBAR ─ */
+.statusbar{
+  flex-shrink:0;height:24px;
+  display:flex;align-items:center;
+  background:var(--bg3);
+  border-bottom:1px solid var(--border);
+  font-size:10px;letter-spacing:.5px;
+  overflow:hidden;
+}
+.sb{
+  padding:0 12px;height:100%;
+  display:flex;align-items:center;gap:6px;
+  border-right:1px solid var(--border);
+  white-space:nowrap;flex-shrink:0;
+}
+.sb.mg{color:var(--mg);background:rgba(255,0,255,.04);}
+.sb.gr{color:var(--gr);}
+.sb.dim{color:var(--dim);}
+.sb.grow{flex:1;border-right:none;}
+.sb.right{margin-left:auto;border-right:none;border-left:1px solid var(--border);}
+.sb-dot{width:5px;height:5px;border-radius:50%;display:inline-block;}
+.logout-btn{
+  height:100%;padding:0 14px;
+  background:transparent;border:none;
+  border-left:1px solid var(--border);
+  color:var(--dim);font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:2px;cursor:pointer;
+  transition:color .15s,background .15s;
+}
+.logout-btn:hover{color:#cc3333;background:rgba(204,51,51,.06);}
+
+/* ─ MAIN ─ */
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:16px;gap:12px;}
+
+/* ─ MODULE CARDS ─ */
+.modules-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;flex-shrink:0;}
+@media(max-width:700px){.modules-row{grid-template-columns:1fr;}}
+.mod-card{
+  border:1px solid var(--border);
+  background:var(--bg2);
+  display:flex;flex-direction:column;
+  transition:border-color .15s,box-shadow .15s;
+}
+.mod-card:hover{border-color:var(--mg2);box-shadow:0 0 20px rgba(255,0,255,.06);}
+.mod-header{
+  padding:8px 12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;
+  font-size:10px;letter-spacing:1px;color:var(--mg);
+  background:rgba(255,0,255,.03);
+}
+.mod-header .dot{width:6px;height:6px;border-radius:50%;background:var(--gr);}
+.mod-lang{font-size:9px;letter-spacing:2px;color:var(--gr);margin-left:auto;}
+.mod-body{flex:1;padding:12px;display:flex;flex-direction:column;gap:6px;}
+.mod-item{font-size:11px;color:var(--dim);padding:2px 0;}
+.mod-item::before{content:'◉ ';color:var(--mg2);font-size:9px;}
+.mod-footer{padding:8px 12px;border-top:1px solid var(--border);}
+.mod-btn{
+  display:block;width:100%;
+  background:transparent;border:1px solid var(--border);
+  color:var(--gr);font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:2px;padding:7px;
+  cursor:pointer;text-decoration:none;text-align:center;
+  transition:border-color .15s,background .15s,color .15s;
+}
+.mod-btn:hover{border-color:var(--gr);background:rgba(0,255,65,.06);}
+
+/* ─ TERMINAL ─ */
+.term-wrap{
+  flex:1;border:1px solid var(--border);
+  background:var(--bg2);display:flex;flex-direction:column;
+  min-height:0;
+}
+.term-header{
+  padding:7px 12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;
+  font-size:10px;letter-spacing:1px;color:var(--gr);
+  background:rgba(0,255,65,.02);flex-shrink:0;
+}
+.term-dots{display:flex;gap:5px;}
+.term-dots span{width:8px;height:8px;border-radius:50%;}
+.term-dots .r{background:#1a0808;} .term-dots .y{background:#1a1408;} .term-dots .g{background:#083a08;}
+.term-output{
+  flex:1;overflow-y:auto;padding:10px 14px;
+  font-size:12px;line-height:1.7;
+  min-height:0;
+}
+.term-output::-webkit-scrollbar{width:3px;}
+.term-output::-webkit-scrollbar-thumb{background:var(--border);}
+.term-line{color:var(--fg);white-space:pre-wrap;}
+.term-line.cmd{color:var(--gr);}
+.term-line.ok{color:#b0e0b0;}
+.term-line.err{color:#cc3333;}
+.term-line.mg{color:var(--mg);}
+.term-line.dim{color:var(--dim);}
+.term-input-row{
+  display:flex;align-items:center;gap:4px;
+  padding:6px 14px 10px;border-top:1px solid var(--border);
+  flex-shrink:0;
+}
+.term-ps{color:var(--gr);font-size:12px;white-space:nowrap;}
+.term-input{
+  flex:1;background:transparent;border:none;
+  color:var(--gr);font-family:'JetBrains Mono',monospace;
+  font-size:12px;outline:none;letter-spacing:.5px;
+  caret-color:var(--gr);
+}
+</style>
+</head>
+<body>
+
+<!-- STATUSBAR -->
+<div class="statusbar">
+  <div class="sb mg">jezabel.net</div>
+  <div class="sb gr">
+    <span class="sb-dot" style="background:var(--gr)"></span>
+    <span id="sb-user">user</span>@codex
+  </div>
+  <div class="sb dim">modules: 4</div>
+  <div class="sb dim" id="sb-cpu">cpu: --</div>
+  <div class="sb dim" id="sb-mem">mem: --</div>
+  <div class="sb grow"></div>
+  <div class="sb right dim" id="sb-clock">00:00:00</div>
+  <button class="logout-btn" onclick="doLogout()">logout</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- MODULE CARDS -->
+  <div class="modules-row">
+    <div class="mod-card">
+      <div class="mod-header">
+        <span class="dot"></span>
+        <span>javascript/</span>
+        <span class="mod-lang">JS · ES6+</span>
+      </div>
+      <div class="mod-body">
+        <div class="mod-item">interactive ripple — DOM events</div>
+        <div class="mod-item">canvas manipulation</div>
+        <div class="mod-item">event-driven architecture</div>
+        <div class="mod-item">primer: your first program</div>
+      </div>
+      <div class="mod-footer">
+        <a href="../app/javascript/" class="mod-btn">$ open javascript/</a>
+      </div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-header">
+        <span class="dot"></span>
+        <span>python/</span>
+        <span class="mod-lang">PY · 3.x</span>
+      </div>
+      <div class="mod-body">
+        <div class="mod-item">argparse mastery</div>
+        <div class="mod-item">@classmethod patterns</div>
+        <div class="mod-item">cli app architecture</div>
+        <div class="mod-item">pro argument parsing</div>
+      </div>
+      <div class="mod-footer">
+        <a href="../app/python/cli-apps-parsing/" class="mod-btn">$ open python/</a>
+      </div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-header">
+        <span class="dot"></span>
+        <span>linux/</span>
+        <span class="mod-lang">BASH · SYS</span>
+      </div>
+      <div class="mod-body">
+        <div class="mod-item">linuxMagick — file ops</div>
+        <div class="mod-item">symlink mastery</div>
+        <div class="mod-item">raspberry pi — swap config</div>
+        <div class="mod-item">system administration</div>
+      </div>
+      <div class="mod-footer">
+        <a href="../app/linuxMagick/" class="mod-btn">$ open linux/</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- TERMINAL -->
+  <div class="term-wrap">
+    <div class="term-header">
+      <div class="term-dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+      <span>terminal — jezabel@net:~/codex</span>
+    </div>
+    <div class="term-output" id="term-output"></div>
+    <div class="term-input-row">
+      <span class="term-ps" id="term-ps">user@jezabel:~/codex$</span>
+      <input class="term-input" id="term-input" autocomplete="off" spellcheck="false">
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─ AUTH ─
+var TK='jezabel_token', UK='jezabel_user';
+var token=sessionStorage.getItem(TK);
+if(!token){
+  var base=(location.pathname.match(/^(.*\/docs\/)/) || ['','/'])[1];
+  window.location.replace(base+'login/');
+}
+var userData=JSON.parse(sessionStorage.getItem(UK)||'{}');
+var uname=userData.username||'user';
+document.getElementById('sb-user').textContent=uname;
+document.getElementById('term-ps').textContent=uname+'@jezabel:~/codex$';
+
+// ─ CLOCK + FAKE STATS ─
+function tick(){
+  var n=new Date();
+  document.getElementById('sb-clock').textContent=
+    String(n.getHours()).padStart(2,'0')+':'+
+    String(n.getMinutes()).padStart(2,'0')+':'+
+    String(n.getSeconds()).padStart(2,'0');
+  document.getElementById('sb-cpu').textContent='cpu: '+(8+Math.floor(Math.random()*6))+'%';
+  document.getElementById('sb-mem').textContent='mem: '+(1.8+Math.random()*.4).toFixed(1)+'G';
+}
+setInterval(tick,1000);tick();
+
+// ─ TERMINAL ─
+var HIST=[],HIST_IDX=-1;
+
+function termOut(text,cls){
+  var out=document.getElementById('term-output');
+  var d=document.createElement('div');
+  d.className='term-line '+(cls||'');
+  d.textContent=text;
+  out.appendChild(d);
+  out.scrollTop=out.scrollHeight;
+}
+function clearTerm(){document.getElementById('term-output').innerHTML='';}
+
+function termExec(raw){
+  var cmd=raw.trim();
+  var lo=cmd.toLowerCase();
+  termOut(uname+'@jezabel:~/codex$ '+cmd,'cmd');
+  if(!cmd)return;
+  HIST.unshift(cmd);HIST_IDX=-1;
+
+  if(lo==='clear'){clearTerm();return;}
+  if(lo==='logout'||lo==='exit'){doLogout();return;}
+  if(lo==='whoami'){termOut('  '+uname,'ok');return;}
+  if(lo==='pwd'){termOut('  /home/'+uname+'/codex','ok');return;}
+  if(lo==='date'){termOut('  '+new Date().toString(),'ok');return;}
+  if(lo==='uname'||lo==='uname -a'){termOut('  jezabel OS v2.7.1 #1 SMP x86_64 GNU/Linux','ok');return;}
+  if(lo==='uptime'){termOut('  up 99 days, 23:59,  1 user,  load: 0.01 0.01 0.00','ok');return;}
+  if(lo==='ls'||lo==='ls -la'||lo==='dir'){
+    termOut('  javascript/   ◉ available\n  python/       ◉ available\n  linux/        ◉ available\n  linux-fixes/  ◉ available','ok');return;
+  }
+  if(lo==='status'||lo==='ps aux'){
+    termOut('  [auth]     active\n  [modules]  4 loaded\n  [sessions] 1 active\n  [network]  nominal\n  [uptime]   running','ok');return;
+  }
+  if(lo==='help'||lo==='man'||lo==='?'){
+    termOut('  ls               list exercise modules\n  open [module]    open module (javascript/python/linux/linux-fixes)\n  status           system status\n  whoami           current user\n  pwd              current directory\n  date             current date/time\n  uname            system info\n  clear            clear terminal\n  logout / exit    end session','ok');return;
+  }
+  if(lo==='neo'){termOut('  follow the white rabbit.','mg');return;}
+  if(lo==='matrix'){termOut('  there is no spoon.','mg');return;}
+  if(lo==='hack'){termOut('  [INITIATING]... just kidding.\n  read the source. that is the hack.','mg');return;}
+  if(lo==='sudo'||lo.startsWith('sudo ')){termOut('  [sudo] password for '+uname+': nice try.','err');return;}
+  if(lo.includes('rm -rf')||lo.includes('rm -r /')){termOut('  permission denied. (nice try, though)','err');return;}
+  if(lo==='cd javascript'||lo==='cd js'){termOut('  hint: use: open javascript','dim');return;}
+  if(lo==='cd python'||lo==='cd py'){termOut('  hint: use: open python','dim');return;}
+  if(lo==='cd linux'){termOut('  hint: use: open linux','dim');return;}
+
+  if(lo==='open javascript'||lo==='open js'||lo==='cd javascript/'){
+    termOut('  → opening javascript/...','ok');
+    setTimeout(function(){window.location.href='../app/javascript/';},400);return;
+  }
+  if(lo==='open python'||lo==='open py'||lo==='open python/'){
+    termOut('  → opening python/...','ok');
+    setTimeout(function(){window.location.href='../app/python/cli-apps-parsing/';},400);return;
+  }
+  if(lo==='open linux'||lo==='open linux/'||lo==='open linuxmagick'){
+    termOut('  → opening linux/...','ok');
+    setTimeout(function(){window.location.href='../app/linuxMagick/';},400);return;
+  }
+  if(lo==='open linux-fixes'||lo==='open fixes'||lo==='open linuxfixes'){
+    termOut('  → opening linux-fixes/...','ok');
+    setTimeout(function(){window.location.href='../app/linuxFixes/raspberrypi/swap/';},400);return;
+  }
+
+  termOut('  command not found: '+cmd+'\n  type \'help\' for available commands','err');
+}
+
+var inp=document.getElementById('term-input');
+inp.addEventListener('keydown',function(e){
+  if(e.key==='Enter'){
+    var v=this.value;this.value='';
+    termExec(v);
+  } else if(e.key==='ArrowUp'){
+    e.preventDefault();
+    if(HIST_IDX<HIST.length-1){HIST_IDX++;this.value=HIST[HIST_IDX];}
+  } else if(e.key==='ArrowDown'){
+    e.preventDefault();
+    if(HIST_IDX>0){HIST_IDX--;this.value=HIST[HIST_IDX];}
+    else{HIST_IDX=-1;this.value='';}
+  }
+});
+// auto-focus terminal
+document.addEventListener('click',function(e){
+  if(!e.target.closest('a')&&!e.target.closest('button')) inp.focus();
+});
+
+// ─ BOOT MSG ─
+(function(){
+  var msgs=[
+    '  jezabel OS v2.7.1 — codex loaded',
+    '  auth: token verified',
+    '  modules: 4 available',
+    '  type \'help\' to list commands. type \'ls\' to see modules.',
+  ];
+  msgs.forEach(function(m,i){
+    setTimeout(function(){termOut(m,'dim');},i*120);
+  });
+  setTimeout(function(){inp.focus();},600);
+})();
+
+function doLogout(){
+  sessionStorage.removeItem(TK);sessionStorage.removeItem(UK);
+  var base=(location.pathname.match(/^(.*\/docs\/)/) || ['','/'])[1];
+  window.location.replace(base+'login/');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>jezabel.net - symlink codex / telegram install</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0d0015;
+            --fg: #f0e0ff;
+            --accent: #ff00ff;
+            --green: #00ff88;
+            --dim: #7a4a7a;
+            --darker: #050008;
+            --yellow: #ffdd00;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.6;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .serpent-background {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1;
+        }
+
+        #serpent-canvas {
+            width: 100%; height: 100%;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            flex: 1;
+        }
+
+        header {
+            margin-bottom: 4rem;
+            border-bottom: 1px solid var(--dim);
+            padding-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 300;
+            letter-spacing: -2px;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+            text-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+        }
+
+        .tagline {
+            color: var(--dim);
+            font-size: 1.1rem;
+        }
+
+        .hero {
+            margin-bottom: 4rem;
+        }
+
+        .hero-text {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            line-height: 1.8;
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1.2em;
+            background: var(--accent);
+            margin-left: 2px;
+            animation: blink 0.7s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* CONCEPT BLOCKS */
+        .concept-block {
+            background: var(--darker);
+            border: 1px solid var(--dim);
+            border-left: 3px solid var(--accent);
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .concept-block h2 {
+            font-size: 1.8rem;
+            font-weight: 300;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .concept-block p {
+            color: var(--dim);
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .concept-block p strong {
+            color: var(--fg);
+        }
+
+        /* SYMLINK DIAGRAM */
+        .diagram {
+            background: #000;
+            border: 1px solid var(--accent);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+
+        .diagram-line {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .diagram-node {
+            color: var(--green);
+            background: rgba(0, 255, 136, 0.08);
+            border: 1px solid var(--green);
+            padding: 0.2rem 0.6rem;
+            font-size: 0.85rem;
+        }
+
+        .diagram-node.accent {
+            color: var(--accent);
+            background: rgba(255, 0, 255, 0.08);
+            border-color: var(--accent);
+        }
+
+        .diagram-arrow {
+            color: var(--yellow);
+            font-size: 1rem;
+        }
+
+        .diagram-label {
+            color: var(--dim);
+            font-size: 0.8rem;
+            font-style: italic;
+        }
+
+        /* KNOWLEDGE GRID */
+        .knowledge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .knowledge-card {
+            border: 1px solid var(--dim);
+            padding: 1.8rem;
+            background: var(--darker);
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .knowledge-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.12);
+        }
+
+        .knowledge-card::before {
+            content: attr(data-glyph);
+            position: absolute;
+            top: 0.5rem;
+            right: 0.8rem;
+            color: var(--dim);
+            font-size: 1.4rem;
+        }
+
+        .card-label {
+            color: var(--accent);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            margin-bottom: 0.8rem;
+            color: var(--fg);
+        }
+
+        .card-body {
+            color: var(--dim);
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+
+        .card-body code {
+            color: var(--green);
+            font-size: 0.85rem;
+        }
+
+        /* RULES */
+        .rules-block {
+            border: 1px solid var(--dim);
+            padding: 2rem;
+            margin-bottom: 4rem;
+            background: var(--darker);
+        }
+
+        .rules-block h3 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-weight: 300;
+        }
+
+        .rules-block ul {
+            list-style: none;
+            color: var(--dim);
+        }
+
+        .rules-block li {
+            margin-bottom: 0.6rem;
+            padding-left: 1rem;
+        }
+
+        .rules-block li::before {
+            content: "→ ";
+            color: var(--accent);
+        }
+
+        .rules-block li strong {
+            color: var(--fg);
+        }
+
+        /* ===== INTERACTIVE TERMINAL ===== */
+        .terminal-section {
+            background: var(--darker);
+            border: 2px solid var(--accent);
+            padding: 0;
+            margin-bottom: 4rem;
+        }
+
+        .terminal-titlebar {
+            background: rgba(255, 0, 255, 0.12);
+            border-bottom: 1px solid var(--accent);
+            padding: 0.6rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--dim);
+        }
+
+        .terminal-dot.red { background: #ff5f56; }
+        .terminal-dot.yellow { background: #ffbd2e; }
+        .terminal-dot.green { background: #27c93f; }
+
+        .terminal-title {
+            flex: 1;
+            text-align: center;
+            color: var(--dim);
+            font-size: 0.85rem;
+        }
+
+        .terminal-body {
+            padding: 1.5rem;
+            min-height: 380px;
+            max-height: 520px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--dim) transparent;
+        }
+
+        .t-line {
+            margin-bottom: 0.35rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .t-line.prompt { color: var(--fg); }
+        .t-line.output { color: var(--dim); }
+        .t-line.success { color: var(--green); }
+        .t-line.error   { color: #ff4444; }
+        .t-line.info    { color: var(--yellow); }
+        .t-line.accent  { color: var(--accent); }
+        .t-line.blank   { height: 0.6rem; }
+
+        .t-prompt-sym { color: var(--accent); }
+        .t-user       { color: var(--green); }
+        .t-host       { color: var(--accent); }
+        .t-path       { color: var(--yellow); }
+
+        .terminal-input-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-top: 1px solid var(--dim);
+            padding: 0.8rem 1.5rem;
+            background: rgba(0,0,0,0.3);
+        }
+
+        .terminal-prompt-label {
+            color: var(--dim);
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .terminal-prompt-label .t-user { color: var(--green); }
+        .terminal-prompt-label .t-host { color: var(--accent); }
+        .terminal-prompt-label .t-path { color: var(--yellow); }
+        .terminal-prompt-label .t-sym  { color: var(--fg); }
+
+        #terminal-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--fg);
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            outline: none;
+            caret-color: var(--accent);
+        }
+
+        #terminal-input::placeholder {
+            color: var(--dim);
+            opacity: 0.5;
+        }
+
+        .hint-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            border-top: 1px solid rgba(122,74,122,0.3);
+        }
+
+        .hint-chip {
+            background: rgba(255,0,255,0.07);
+            border: 1px solid var(--dim);
+            color: var(--dim);
+            padding: 0.2rem 0.7rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Courier New', monospace;
+        }
+
+        .hint-chip:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(255,0,255,0.12);
+        }
+
+        /* FOOTER */
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            border-top: 1px solid var(--dim);
+            margin-top: 4rem;
+        }
+
+        .powered {
+            color: var(--dim);
+            font-size: 0.9rem;
+        }
+
+        .powered a {
+            color: var(--fg);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .powered a:hover { color: var(--accent); }
+
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            h1 { font-size: 2rem; }
+            .hero-text { font-size: 1.1rem; }
+            .knowledge-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<script src="../../../auth-guard.js"></script>
+    <div class="serpent-background">
+        <canvas id="serpent-canvas"></canvas>
+    </div>
+
+    <div class="container">
+
+        <!-- HEADER -->
+        <header>
+            <h1>jezabel.net</h1>
+            <p class="tagline">symlink codex / telegram install protocol</p>
+        </header>
+
+        <!-- HERO -->
+        <section class="hero">
+            <p class="hero-text" id="typing-text"></p>
+        </section>
+
+        <!-- CONCEPT: WHAT IS A SYMLINK -->
+        <section class="concept-block">
+            <h2>// what is a symlink</h2>
+            <p>
+                a <strong>symbolic link</strong> is a pointer. a ghost file that says:
+                <em style="color: var(--fg)">"the real thing lives over there."</em>
+                linux follows it transparently — the system sees the destination, not the link.
+            </p>
+            <p>
+                think of it like a portal. <strong>/usr/local/bin/telegram</strong> is the door.
+                <strong>/opt/Telegram/Telegram</strong> is where the room actually is.
+            </p>
+
+            <div class="diagram">
+                <div class="diagram-line">
+                    <span class="diagram-label">you type:</span>
+                    <span class="diagram-node accent">telegram</span>
+                </div>
+                <div class="diagram-line" style="margin-left: 1rem;">
+                    <span class="diagram-arrow">↓</span>
+                    <span class="diagram-label">shell resolves PATH → finds:</span>
+                </div>
+                <div class="diagram-line" style="margin-left: 1rem;">
+                    <span class="diagram-node accent">/usr/local/bin/telegram</span>
+                    <span class="diagram-arrow" style="font-size:0.8rem">SYMLINK</span>
+                    <span class="diagram-node">/opt/Telegram/Telegram</span>
+                    <span class="diagram-label">(real binary)</span>
+                </div>
+                <div class="diagram-line" style="margin-left: 1rem;">
+                    <span class="diagram-arrow">↓</span>
+                    <span class="diagram-label">executes actual binary</span>
+                </div>
+            </div>
+
+            <p>
+                the binary lives in <strong>/opt</strong> — your territory for third-party installs.
+                the symlink lives in <strong>/usr/local/bin</strong> — on every user's PATH.
+                clean separation. zero pollution.
+            </p>
+        </section>
+
+        <!-- KNOWLEDGE CARDS -->
+        <section class="knowledge-grid">
+
+            <div class="knowledge-card" data-glyph="→">
+                <div class="card-label">concept</div>
+                <div class="card-title">soft vs hard link</div>
+                <div class="card-body">
+                    <strong style="color:var(--accent)">soft (symlink)</strong> — points to a <em>path</em>.
+                    if original is deleted, link breaks. crosses filesystems. use this always.<br><br>
+                    <strong style="color:var(--green)">hard link</strong> — points to raw <em>inode</em> on disk.
+                    deletion-proof. can't cross filesystems. rarely needed.
+                </div>
+            </div>
+
+            <div class="knowledge-card" data-glyph="⌁">
+                <div class="card-label">syntax</div>
+                <div class="card-title">ln -sf explained</div>
+                <div class="card-body">
+                    <code>ln -sf [TARGET] [LINK_NAME]</code><br><br>
+                    <code>-s</code> → symbolic (soft) link<br>
+                    <code>-f</code> → force (overwrite existing)<br><br>
+                    target = real file. link_name = alias you invoke.
+                    order matters — don't flip them.
+                </div>
+            </div>
+
+            <div class="knowledge-card" data-glyph="⊕">
+                <div class="card-label">filesystem</div>
+                <div class="card-title">where things belong</div>
+                <div class="card-body">
+                    <code>/opt/AppName/</code> → third-party app binaries<br>
+                    <code>/usr/local/bin/</code> → manual symlinks (system-wide)<br>
+                    <code>~/.local/bin/</code> → per-user, no sudo needed<br><br>
+                    apt never touches <code>/usr/local</code>. your zone.
+                </div>
+            </div>
+
+            <div class="knowledge-card" data-glyph="✕">
+                <div class="card-label">danger</div>
+                <div class="card-title">broken links</div>
+                <div class="card-body">
+                    move or delete the target → symlink turns ghost.<br>
+                    <code>find /usr/local/bin -xtype l</code> lists all broken.<br><br>
+                    always use <code>unlink</code> or <code>rm</code> to remove — 
+                    never <code>rm -rf</code> on a symlinked directory.
+                </div>
+            </div>
+
+            <div class="knowledge-card" data-glyph="↺">
+                <div class="card-label">pattern</div>
+                <div class="card-title">version switching</div>
+                <div class="card-body">
+                    keep <code>/opt/Telegram-v1/</code> and <code>/opt/Telegram-v2/</code>.<br>
+                    update is one command:<br><br>
+                    <code>ln -sf /opt/Telegram-v2/Telegram /usr/local/bin/telegram</code><br><br>
+                    rollback = same command, old path. zero downtime.
+                </div>
+            </div>
+
+            <div class="knowledge-card" data-glyph="◎">
+                <div class="card-label">inspect</div>
+                <div class="card-title">read a symlink</div>
+                <div class="card-body">
+                    <code>ls -la /usr/local/bin/telegram</code><br>
+                    shows the <code>→</code> arrow pointing to target<br><br>
+                    <code>readlink -f /usr/local/bin/telegram</code><br>
+                    resolves full absolute path, even chained links
+                </div>
+            </div>
+
+        </section>
+
+        <!-- RULES -->
+        <section class="rules-block">
+            <h3>symlink doctrine</h3>
+            <ul>
+                <li><strong>target first, link second</strong> — ln -sf [real] [alias]. never reversed.</li>
+                <li><strong>/opt is sacred</strong> — drop all manual binaries there. apt can't touch it.</li>
+                <li><strong>always use -f</strong> — silently overwrites stale links. no drama.</li>
+                <li><strong>inspect before you trust</strong> — ls -la to verify before executing anything.</li>
+                <li><strong>never rm -rf a symlinked dir</strong> — it follows the link and destroys the target.</li>
+                <li><strong>broken links are silent killers</strong> — audit with find -xtype l regularly.</li>
+            </ul>
+        </section>
+
+        <!-- INTERACTIVE TERMINAL -->
+        <section class="terminal-section">
+            <div class="terminal-titlebar">
+                <div class="terminal-dot red"></div>
+                <div class="terminal-dot yellow"></div>
+                <div class="terminal-dot green"></div>
+                <div class="terminal-title">bash — telegram install protocol</div>
+            </div>
+
+            <div class="terminal-body" id="terminal-body"></div>
+
+            <div class="hint-bar">
+                <span class="hint-chip" onclick="fillCmd('help')">help</span>
+                <span class="hint-chip" onclick="fillCmd('wget')">1. wget</span>
+                <span class="hint-chip" onclick="fillCmd('extract')">2. extract</span>
+                <span class="hint-chip" onclick="fillCmd('move')">3. move to /opt</span>
+                <span class="hint-chip" onclick="fillCmd('symlink')">4. symlink</span>
+                <span class="hint-chip" onclick="fillCmd('verify')">5. verify</span>
+                <span class="hint-chip" onclick="fillCmd('run')">6. run</span>
+                <span class="hint-chip" onclick="fillCmd('inspect')">inspect link</span>
+                <span class="hint-chip" onclick="fillCmd('source')">source bashrc</span>
+                <span class="hint-chip" onclick="fillCmd('clear')">clear</span>
+            </div>
+
+            <div class="terminal-input-row">
+                <span class="terminal-prompt-label">
+                    <span class="t-user">user</span><span style="color:var(--dim)">@</span><span class="t-host">jezabel</span>:<span class="t-path">~</span><span class="t-sym">$</span>
+                </span>
+                <input type="text" id="terminal-input" autocomplete="off" spellcheck="false" placeholder="type a command or click a chip above...">
+            </div>
+        </section>
+
+    </div>
+
+    <footer>
+        <p class="powered">powered by <a href="https://lempyra.com">Lempyrλ</a></p>
+    </footer>
+
+    <script>
+    // ─── TYPING HERO ─────────────────────────────────────────────────────────
+    const heroText = "a symlink is not a copy. it is a promise. a pointer burned into the filesystem that says: follow me. the binary lives in /opt. the alias lives in /bin. linux does the rest.";
+    const typingEl = document.getElementById('typing-text');
+    let charIdx = 0;
+
+    function typeChar() {
+        if (charIdx < heroText.length) {
+            typingEl.textContent = heroText.substring(0, charIdx + 1);
+            charIdx++;
+            setTimeout(typeChar, 22);
+        } else {
+            const cur = document.createElement('span');
+            cur.className = 'typing-cursor';
+            typingEl.appendChild(cur);
+        }
+    }
+
+    window.addEventListener('load', () => setTimeout(typeChar, 600));
+
+    // ─── TERMINAL ENGINE ──────────────────────────────────────────────────────
+    const tbody = document.getElementById('terminal-body');
+    const tinput = document.getElementById('terminal-input');
+
+    let state = {
+        downloaded: false,
+        extracted: false,
+        moved: false,
+        linked: false,
+        verified: false,
+    };
+
+    function tline(text, cls = 'output', delay = 0) {
+        return new Promise(res => setTimeout(() => {
+            const d = document.createElement('div');
+            d.className = 't-line ' + cls;
+            d.textContent = text;
+            tbody.appendChild(d);
+            tbody.scrollTop = tbody.scrollHeight;
+            res();
+        }, delay));
+    }
+
+    function blank(delay = 0) { return tline('', 'blank', delay); }
+
+    function echoCmd(cmd) {
+        const d = document.createElement('div');
+        d.className = 't-line prompt';
+        d.innerHTML = `<span style="color:var(--green)">user</span><span style="color:var(--dim)">@</span><span style="color:var(--accent)">jezabel</span>:<span style="color:var(--yellow)">~</span>$ ${cmd}`;
+        tbody.appendChild(d);
+        tbody.scrollTop = tbody.scrollHeight;
+    }
+
+    async function runSequence(lines) {
+        for (const [text, cls, delay] of lines) {
+            await tline(text, cls, delay || 60);
+        }
+    }
+
+    const COMMANDS = {
+
+        help: async () => {
+            await runSequence([
+                ['available commands:', 'accent'],
+                ['', 'blank'],
+                ['  wget      — download latest telegram tarball', 'output'],
+                ['  extract   — unpack the archive', 'output'],
+                ['  move      — move Telegram/ to /opt', 'output'],
+                ['  symlink   — create /usr/local/bin/telegram symlink', 'output'],
+                ['  verify    — inspect the symlink', 'output'],
+                ['  run       — launch telegram', 'output'],
+                ['  inspect   — readlink -f on the symlink', 'output'],
+                ['  source    — re-source ~/.bashrc', 'output'],
+                ['  clear     — clear terminal', 'output'],
+                ['', 'blank'],
+                ['tip: click the chips above to auto-fill commands.', 'info'],
+            ]);
+        },
+
+        wget: async () => {
+            await tline('fetching latest telegram release...', 'info', 0);
+            await tline('→ resolving telegram.org...', 'output', 300);
+            await tline('→ connected. negotiating TLS 1.3...', 'output', 600);
+            await tline('→ GET /dl/desktop/linux/Telegram.tar.xz', 'output', 900);
+            await blank(1100);
+            const frames = [10, 23, 41, 58, 72, 84, 95, 100];
+            for (const f of frames) {
+                await tline(`   [${'█'.repeat(Math.floor(f/5))}${'░'.repeat(20-Math.floor(f/5))}] ${f}%`, 'output', 200);
+            }
+            await blank(300);
+            await tline('Telegram.tar.xz saved  [62.4 MB]', 'success', 200);
+            state.downloaded = true;
+        },
+
+        extract: async () => {
+            if (!state.downloaded) {
+                await tline('error: archive not found. run wget first.', 'error'); return;
+            }
+            await tline('$ tar -xJf Telegram.tar.xz', 'prompt', 0);
+            await tline('→ decompressing xz stream...', 'output', 300);
+            await tline('→ extracting: Telegram/', 'output', 600);
+            await tline('→ extracting: Telegram/Telegram', 'output', 800);
+            await tline('→ extracting: Telegram/telegram.png', 'output', 1000);
+            await tline('→ extracting: Telegram/log/', 'output', 1100);
+            await tline('done. Telegram/ is in current directory.', 'success', 1300);
+            state.extracted = true;
+        },
+
+        move: async () => {
+            if (!state.extracted) {
+                await tline('error: Telegram/ directory not found. run extract first.', 'error'); return;
+            }
+            await tline('$ sudo mv Telegram /opt/Telegram', 'prompt', 0);
+            await tline('[sudo] password for user: ········', 'output', 300);
+            await tline('→ moving Telegram/ → /opt/Telegram/', 'output', 900);
+            await tline('→ setting permissions...', 'output', 1100);
+            await tline('/opt/Telegram/ installed.', 'success', 1300);
+            await blank(100);
+            await tline('  /opt/Telegram/', 'output', 100);
+            await tline('  └── Telegram          ← real binary here', 'output', 100);
+            await tline('  └── telegram.png', 'output', 100);
+            state.moved = true;
+        },
+
+        symlink: async () => {
+            if (!state.moved) {
+                await tline('error: /opt/Telegram not found. run move first.', 'error'); return;
+            }
+            await tline('$ sudo ln -sf /opt/Telegram/Telegram /usr/local/bin/telegram', 'prompt', 0);
+            await tline('→ creating symbolic link...', 'output', 500);
+            await tline('', 'blank', 700);
+            await tline('  /usr/local/bin/telegram', 'accent', 700);
+            await tline('         ↓  (symlink)', 'info', 900);
+            await tline('  /opt/Telegram/Telegram', 'success', 1100);
+            await blank(200);
+            await tline('symlink created. telegram is now on your PATH.', 'success', 200);
+            state.linked = true;
+        },
+
+        verify: async () => {
+            if (!state.linked) {
+                await tline('error: symlink not yet created. run symlink first.', 'error'); return;
+            }
+            await tline('$ ls -la /usr/local/bin/telegram', 'prompt', 0);
+            await tline('lrwxrwxrwx 1 root root 26 Feb 23 18:42', 'output', 400);
+            await tline('/usr/local/bin/telegram -> /opt/Telegram/Telegram', 'success', 400);
+            await blank(200);
+            await tline('→ link is valid. target exists. status: ✓ healthy', 'success', 200);
+            state.verified = true;
+        },
+
+        run: async () => {
+            if (!state.linked) {
+                await tline('error: symlink missing. complete install sequence first.', 'error'); return;
+            }
+            await tline('$ telegram', 'prompt', 0);
+            await tline('→ shell resolves: telegram → /usr/local/bin/telegram', 'output', 300);
+            await tline('→ follows symlink → /opt/Telegram/Telegram', 'output', 600);
+            await tline('→ executes binary...', 'output', 900);
+            await blank(300);
+            await tline('Telegram Desktop launching... ✓', 'success', 300);
+            await tline('', 'blank', 100);
+            await tline('install complete. all 4 steps done:', 'info', 100);
+            await tline('  [✓] downloaded   [✓] extracted   [✓] moved to /opt   [✓] symlinked', 'success', 100);
+        },
+
+        inspect: async () => {
+            if (!state.linked) {
+                await tline('error: no symlink to inspect yet.', 'error'); return;
+            }
+            await tline('$ readlink -f /usr/local/bin/telegram', 'prompt', 0);
+            await tline('/opt/Telegram/Telegram', 'success', 400);
+            await blank(200);
+            await tline('$ file /usr/local/bin/telegram', 'prompt', 200);
+            await tline('/usr/local/bin/telegram: symbolic link to /opt/Telegram/Telegram', 'output', 600);
+            await tline('$ file /opt/Telegram/Telegram', 'prompt', 900);
+            await tline('/opt/Telegram/Telegram: ELF 64-bit LSB pie executable, x86-64', 'output', 1200);
+        },
+
+        source: async () => {
+            await tline('$ source ~/.bashrc', 'prompt', 0);
+            await tline('→ reloading shell environment...', 'output', 300);
+            await tline('→ PATH refreshed', 'success', 600);
+            await tline('→ aliases reloaded', 'success', 800);
+            await tline('→ functions reloaded', 'success', 1000);
+            await tline('bashrc sourced. new PATH entries are now active.', 'success', 1200);
+            await blank(200);
+            await tline("tip: 'source ~/.bashrc' == '. ~/.bashrc'  (same thing)", 'info', 200);
+        },
+
+        clear: async () => {
+            tbody.innerHTML = '';
+            await tline('terminal cleared.', 'dim');
+        },
+    };
+
+    // Aliases
+    COMMANDS['wget telegram'] = COMMANDS.wget;
+    COMMANDS['extract'] = COMMANDS.extract;
+    COMMANDS['source ~/.bashrc'] = COMMANDS.source;
+    COMMANDS['. ~/.bashrc'] = COMMANDS.source;
+
+    tinput.addEventListener('keypress', async (e) => {
+        if (e.key !== 'Enter') return;
+        const raw = tinput.value.trim();
+        tinput.value = '';
+        if (!raw) return;
+
+        echoCmd(raw);
+
+        const key = raw.toLowerCase();
+        const handler = COMMANDS[key];
+
+        if (handler) {
+            await handler();
+        } else {
+            await tline(`bash: command not found: ${raw}`, 'error', 100);
+            await tline("type 'help' to see available commands.", 'info', 100);
+        }
+
+        await blank(50);
+    });
+
+    function fillCmd(cmd) {
+        tinput.value = cmd;
+        tinput.focus();
+    }
+
+    // Boot message
+    window.addEventListener('load', async () => {
+        await tline('jezabel symlink terminal — telegram install protocol', 'accent', 800);
+        await tline('─'.repeat(52), 'dim', 900);
+        await tline("type 'help' or click a chip to begin.", 'info', 1000);
+        await blank(1050);
+    });
+
+    // ─── PARTICLE BACKGROUND ──────────────────────────────────────────────────
+    const serpentCanvas = document.getElementById('serpent-canvas');
+    const sCtx = serpentCanvas.getContext('2d');
+    let hackerStars = [];
+    let mouse = { x: null, y: null };
+    const codeWords = ['symlink', 'ln -sf', '/opt', 'PATH', 'inode', 'readlink', 'binary', 'alias', 'target', 'shell'];
+
+    function resizeCanvas() {
+        serpentCanvas.width = window.innerWidth;
+        serpentCanvas.height = window.innerHeight;
+    }
+
+    class HackerStar {
+        constructor() {
+            this.x = Math.random() * serpentCanvas.width;
+            this.y = Math.random() * serpentCanvas.height;
+            this.vx = (Math.random() - 0.5) * 0.4;
+            this.vy = (Math.random() - 0.5) * 0.4;
+            this.radius = Math.random() * 2 + 1;
+            this.brightness = Math.random() * 0.5 + 0.5;
+            this.color = Math.random() > 0.5 ? '#ff00ff' : '#00ff88';
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy;
+            if (this.x < 0) this.x = serpentCanvas.width;
+            if (this.x > serpentCanvas.width) this.x = 0;
+            if (this.y < 0) this.y = serpentCanvas.height;
+            if (this.y > serpentCanvas.height) this.y = 0;
+            this.brightness += (Math.random() - 0.5) * 0.03;
+            this.brightness = Math.max(0.3, Math.min(1, this.brightness));
+        }
+        draw() {
+            sCtx.beginPath();
+            sCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            sCtx.fillStyle = this.color + Math.floor(this.brightness * 255).toString(16).padStart(2, '0');
+            sCtx.shadowBlur = 8; sCtx.shadowColor = this.color;
+            sCtx.fill(); sCtx.shadowBlur = 0;
+        }
+    }
+
+    function initStars() {
+        hackerStars = [];
+        const n = Math.floor((serpentCanvas.width * serpentCanvas.height) / 8000);
+        for (let i = 0; i < n; i++) hackerStars.push(new HackerStar());
+    }
+
+    function drawConnections() {
+        for (let i = 0; i < hackerStars.length; i++) {
+            for (let j = i + 1; j < hackerStars.length; j++) {
+                const dx = hackerStars[i].x - hackerStars[j].x;
+                const dy = hackerStars[i].y - hackerStars[j].y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < 130) {
+                    const op = (1 - dist/130) * 0.35;
+                    sCtx.beginPath();
+                    sCtx.strokeStyle = hackerStars[i].color + Math.floor(op*255).toString(16).padStart(2,'0');
+                    sCtx.lineWidth = 0.7;
+                    sCtx.moveTo(hackerStars[i].x, hackerStars[i].y);
+                    sCtx.lineTo(hackerStars[j].x, hackerStars[j].y);
+                    sCtx.stroke();
+                }
+            }
+            if (mouse.x !== null) {
+                const dx = mouse.x - hackerStars[i].x;
+                const dy = mouse.y - hackerStars[i].y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < 180) {
+                    const op = (1 - dist/180) * 0.5;
+                    sCtx.beginPath();
+                    sCtx.strokeStyle = hackerStars[i].color + Math.floor(op*255).toString(16).padStart(2,'0');
+                    sCtx.lineWidth = 1.2;
+                    sCtx.moveTo(mouse.x, mouse.y);
+                    sCtx.lineTo(hackerStars[i].x, hackerStars[i].y);
+                    sCtx.stroke();
+                }
+            }
+        }
+    }
+
+    function drawWords() {
+        const visited = new Set();
+        hackerStars.forEach((star, idx) => {
+            if (visited.has(idx)) return;
+            const cluster = [star]; visited.add(idx);
+            hackerStars.forEach((o, oi) => {
+                if (visited.has(oi)) return;
+                const dx = star.x - o.x; const dy = star.y - o.y;
+                if (Math.sqrt(dx*dx+dy*dy) < 90) { cluster.push(o); visited.add(oi); }
+            });
+            if (cluster.length >= 5) {
+                const cx = cluster.reduce((s,c)=>s+c.x,0)/cluster.length;
+                const cy = cluster.reduce((s,c)=>s+c.y,0)/cluster.length;
+                const op = 0.1 + Math.random()*0.2;
+                sCtx.font = '12px Courier New';
+                sCtx.fillStyle = cluster[0].color + Math.floor(op*255).toString(16).padStart(2,'0');
+                sCtx.textAlign = 'center';
+                sCtx.fillText(codeWords[Math.floor(Math.random()*codeWords.length)], cx, cy);
+            }
+        });
+    }
+
+    function animate() {
+        sCtx.fillStyle = 'rgba(13,0,21,0.08)';
+        sCtx.fillRect(0, 0, serpentCanvas.width, serpentCanvas.height);
+        hackerStars.forEach(s => { s.update(); s.draw(); });
+        drawConnections();
+        if (Math.random() < 0.012) drawWords();
+        requestAnimationFrame(animate);
+    }
+
+    serpentCanvas.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    serpentCanvas.addEventListener('mouseleave', () => { mouse.x = null; mouse.y = null; });
+
+    serpentCanvas.addEventListener('click', e => {
+        for (let i = 0; i < 12; i++) {
+            const star = new HackerStar();
+            star.x = e.clientX; star.y = e.clientY;
+            const angle = (Math.PI*2/12)*i;
+            star.vx = Math.cos(angle)*5; star.vy = Math.sin(angle)*5;
+            hackerStars.push(star);
+        }
+        if (hackerStars.length > 220) hackerStars.splice(0, 12);
+    });
+
+    window.addEventListener('resize', () => { resizeCanvas(); initStars(); });
+    resizeCanvas(); initStars(); animate();
+    </script>
+</body>
+</html>

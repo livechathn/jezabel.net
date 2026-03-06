@@ -1,470 +1,378 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>jezabel.net - hacker's codex</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>jezabel.net — hacker's sparring system</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&display=swap">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#050008;--bg2:#0a000f;--bg3:#0d0015;
+  --mg:#ff00ff;--mg2:#8800aa;--gr:#00ff41;--cy:#00ccff;
+  --fg:#e8d8ff;--dim:#4a1a6a;--dim2:#2a0a3a;--border:#1a0828;
+}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'JetBrains Mono',monospace;
+  background:var(--bg);color:var(--fg);
+  min-height:100vh;overflow-x:hidden;
+}
+body::after{
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.06) 3px,rgba(0,0,0,.06) 4px);
+  pointer-events:none;z-index:8000;
+}
 
-        :root {
-            --bg: #0d0015;
-            --fg: #f0e0ff;
-            --accent: #ff00ff;
-            --dim: #7a4a7a;
-            --darker: #050008;
-        }
+/* ─ BOOT OVERLAY ─ */
+#boot{
+  position:fixed;inset:0;
+  background:#000;
+  z-index:9000;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  transition:opacity .6s;
+}
+#boot.out{opacity:0;pointer-events:none;}
+.boot-box{
+  width:min(640px,96vw);
+  font-size:12px;line-height:1.8;letter-spacing:.5px;
+}
+.boot-title{
+  color:var(--mg);font-size:13px;letter-spacing:4px;
+  border-bottom:1px solid #1a001a;padding-bottom:10px;margin-bottom:14px;
+}
+.boot-line{color:#003a00;}
+.boot-line.ok{color:var(--gr);}
+.boot-line.warn{color:#cc6600;}
+.boot-line.hi{color:var(--mg);}
+.boot-rule{border-top:1px solid #0a000a;margin:10px 0;padding-top:10px;color:var(--mg);letter-spacing:3px;}
 
-        body {
-            font-family: 'Courier New', monospace;
-            background: var(--bg);
-            color: var(--fg);
-            line-height: 1.6;
-            padding: 2rem;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-        
-        /* SERPENT CODE TRAILS - SLYTHERIN */
-        .serpent-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-        }
-        
-        #serpent-canvas {
-            width: 100%;
-            height: 100%;
-        }
+/* serpent bg */
+.serpent-background{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+#serpent-canvas{width:100%;height:100%;}
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            flex: 1;
-        }
+/* ─ HEADER ─ */
+header{
+  position:relative;z-index:10;
+  padding:20px 40px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.logo{color:var(--mg);font-size:22px;letter-spacing:2px;text-shadow:0 0 30px rgba(255,0,255,.3);}
+.logo-sub{font-size:9px;letter-spacing:3px;color:var(--dim);margin-top:3px;}
+.nav-login{
+  font-size:11px;letter-spacing:2px;color:var(--gr);
+  text-decoration:none;border:1px solid #003a0f;padding:8px 16px;
+  transition:border-color .2s,background .2s,box-shadow .2s;
+}
+.nav-login:hover{border-color:var(--gr);box-shadow:0 0 20px rgba(0,255,65,.1);background:rgba(0,255,65,.04);}
 
-        header {
-            margin-bottom: 4rem;
-            border-bottom: 1px solid var(--dim);
-            padding-bottom: 2rem;
-        }
+/* ─ CONTENT ─ */
+.content{position:relative;z-index:10;max-width:960px;margin:0 auto;padding:48px 40px 80px;}
 
-        h1 {
-            font-size: 3rem;
-            font-weight: 300;
-            letter-spacing: -2px;
-            margin-bottom: 0.5rem;
-            color: var(--accent);
-            text-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
-        }
+/* ─ HERO ─ */
+.hero{margin-bottom:60px;}
+h1{
+  font-size:clamp(2.5rem,6vw,4.5rem);font-weight:300;
+  letter-spacing:-1px;
+  color:var(--mg);
+  text-shadow:0 0 40px rgba(255,0,255,.25),0 0 80px rgba(255,0,255,.1);
+  margin-bottom:8px;
+}
+.tagline{
+  font-size:13px;letter-spacing:3px;color:var(--dim);
+  margin-bottom:40px;text-transform:uppercase;
+}
 
-        .tagline {
-            color: var(--dim);
-            font-size: 1.1rem;
-        }
+/* ─ DESKTOP MOCKUP ─ */
+.desktop{
+  position:relative;
+  height:260px;
+  margin-bottom:48px;
+  display:flex;
+  gap:12px;
+}
+.tty{
+  border:1px solid;
+  background:#000;
+  display:flex;flex-direction:column;
+  flex:1;
+  font-size:11px;line-height:1.6;
+  overflow:hidden;
+}
+.tty-bar{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 10px;border-bottom:1px solid;
+  font-size:9px;letter-spacing:1px;flex-shrink:0;
+}
+.tty-dot{width:7px;height:7px;border-radius:50%;}
+.tty-title{margin-left:4px;letter-spacing:2px;opacity:.6;}
+.tty-body{flex:1;padding:10px;overflow:hidden;}
+.tty-line{margin-bottom:1px;}
+.blink{animation:blink .9s step-end infinite;}
+@keyframes blink{50%{opacity:0;}}
 
-        .hero {
-            margin-bottom: 4rem;
-        }
+/* green tty */
+.tty.gr{border-color:#002a0a;}
+.tty.gr .tty-bar{border-color:#002a0a;color:#003a0f;}
+.tty.gr .tty-body{color:#006a1a;}
+.tty.gr .hi{color:var(--gr);}
+.tty.gr .tty-dot{background:#002a0a;}
+/* magenta tty */
+.tty.mg{border-color:#2a0030;}
+.tty.mg .tty-bar{border-color:#2a0030;color:#3a0040;}
+.tty.mg .tty-body{color:#5a1a6a;}
+.tty.mg .hi{color:var(--mg);}
+.tty.mg .tty-dot{background:#2a0030;}
+/* cyan tty */
+.tty.cy{border-color:#002a30;}
+.tty.cy .tty-bar{border-color:#002a30;color:#003a40;}
+.tty.cy .tty-body{color:#005060;}
+.tty.cy .hi{color:var(--cy);}
+.tty.cy .tty-dot{background:#002a30;}
 
-        .hero-text {
-            font-size: 1.3rem;
-            margin-bottom: 2rem;
-            line-height: 1.8;
-        }
-        
-        .typing-cursor {
-            display: inline-block;
-            width: 3px;
-            height: 1.2em;
-            background: var(--accent);
-            margin-left: 2px;
-            animation: blink 0.7s infinite;
-            vertical-align: middle;
-        }
-        
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0; }
-        }
+/* ─ LOCKED MODULES ─ */
+.modules{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:16px;margin-bottom:56px;
+}
+.mod{
+  border:1px solid var(--border);background:var(--bg2);
+  padding:20px;position:relative;overflow:hidden;
+  transition:border-color .2s;cursor:pointer;
+}
+.mod:hover{border-color:var(--mg2);}
+.mod-lock{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  background:rgba(5,0,8,.85);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;font-size:10px;letter-spacing:2px;color:var(--dim);
+  transition:opacity .2s;
+}
+.mod:hover .mod-lock{opacity:.9;}
+.mod-lock a{
+  color:var(--mg);text-decoration:none;
+  border:1px solid var(--mg2);padding:6px 16px;font-size:10px;letter-spacing:2px;
+  transition:background .2s;
+}
+.mod-lock a:hover{background:rgba(255,0,255,.1);}
+.mod-lang-tag{font-size:9px;letter-spacing:3px;color:var(--gr);margin-bottom:6px;}
+.mod-name{font-size:14px;color:var(--fg);margin-bottom:8px;letter-spacing:1px;}
+.mod-desc{font-size:11px;color:var(--dim);line-height:1.6;}
 
-        .codex-intro {
-            background: var(--darker);
-            border: 1px solid var(--dim);
-            padding: 2rem;
-            margin-bottom: 4rem;
-            border-left: 3px solid var(--accent);
-        }
+/* ─ MANIFESTO ─ */
+.manifesto{
+  border:1px solid var(--border);border-left:2px solid var(--mg);
+  background:var(--bg2);padding:24px;margin-bottom:56px;
+}
+.manifesto h3{font-size:11px;letter-spacing:3px;color:var(--mg);margin-bottom:16px;font-weight:400;}
+.manifesto ul{list-style:none;display:flex;flex-direction:column;gap:8px;}
+.manifesto li{font-size:12px;color:var(--dim);letter-spacing:.5px;}
+.manifesto li::before{content:'→ ';color:var(--mg);}
 
-        .codex-intro h2 {
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-            font-weight: 300;
-            color: var(--accent);
-        }
+/* ─ CTA ─ */
+.cta{text-align:center;padding:40px 0;}
+.cta-ssh{
+  font-size:14px;letter-spacing:2px;color:var(--dim);
+  margin-bottom:24px;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.cta-ssh span.prompt{color:var(--gr);}
+.cta-ssh span.cmd{color:var(--mg);}
+.cta-btn{
+  display:inline-block;font-size:12px;letter-spacing:3px;
+  color:var(--mg);text-decoration:none;
+  border:1px solid var(--mg2);padding:14px 40px;
+  transition:border-color .3s,box-shadow .3s,background .3s;
+}
+.cta-btn:hover{border-color:var(--mg);box-shadow:0 0 40px rgba(255,0,255,.15);background:rgba(255,0,255,.04);}
 
-        .code-sample {
-            background: #000;
-            border: 1px solid var(--accent);
-            padding: 1.5rem;
-            margin-top: 1rem;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-            overflow-x: auto;
-        }
+footer{
+  position:relative;z-index:10;
+  text-align:center;padding:20px;
+  border-top:1px solid var(--border);
+  font-size:10px;letter-spacing:2px;color:var(--dim);
+}
+footer a{color:var(--dim);text-decoration:none;}
+footer a:hover{color:var(--fg);}
 
-        .code-sample code {
-            color: var(--accent);
-        }
-
-        .libraries {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            margin-bottom: 4rem;
-        }
-
-        .library {
-            border: 1px solid var(--dim);
-            padding: 2rem;
-            transition: all 0.3s;
-            background: var(--darker);
-            position: relative;
-        }
-
-        .library:hover {
-            border-color: var(--accent);
-            box-shadow: 0 0 30px rgba(255, 0, 255, 0.15);
-        }
-
-        .library::before {
-            content: "</>";
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
-            color: var(--dim);
-            font-size: 1.5rem;
-        }
-
-        .library-lang {
-            color: var(--accent);
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .library-title {
-            font-size: 1.3rem;
-            margin-bottom: 1rem;
-            color: var(--fg);
-        }
-
-        .library-desc {
-            color: var(--dim);
-            font-size: 0.95rem;
-            margin-bottom: 1rem;
-        }
-
-        .library-stats {
-            display: flex;
-            gap: 1rem;
-            font-size: 0.85rem;
-            color: var(--dim);
-        }
-
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-        }
-
-        .access-section {
-            background: var(--darker);
-            border: 1px solid var(--accent);
-            padding: 3rem 2rem;
-            text-align: center;
-            margin-bottom: 4rem;
-        }
-
-        .access-section h2 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            font-weight: 300;
-        }
-
-        .access-terminal {
-            background: #000;
-            border: 2px solid var(--dim);
-            padding: 2rem;
-            margin: 2rem auto;
-            max-width: 600px;
-            text-align: left;
-            font-size: 0.95rem;
-        }
-
-        .terminal-line {
-            color: var(--dim);
-            margin-bottom: 0.5rem;
-        }
-
-        .terminal-line span {
-            color: var(--accent);
-        }
-
-        .terminal-cursor {
-            display: inline-block;
-            width: 8px;
-            height: 16px;
-            background: var(--accent);
-            animation: blink 1s infinite;
-        }
-
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0; }
-        }
-
-        .manifesto {
-            border: 1px solid var(--dim);
-            padding: 2rem;
-            margin-bottom: 4rem;
-            background: var(--darker);
-        }
-
-        .manifesto h3 {
-            color: var(--accent);
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
-            font-weight: 300;
-        }
-
-        .manifesto ul {
-            list-style: none;
-            color: var(--dim);
-        }
-
-        .manifesto li {
-            margin-bottom: 0.5rem;
-            padding-left: 1rem;
-        }
-
-        .manifesto li::before {
-            content: "→ ";
-            color: var(--accent);
-            margin-right: 0.5rem;
-        }
-
-        .cta {
-            text-align: center;
-            margin: 4rem 0;
-        }
-
-        .cta-text {
-            font-size: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .cta-button {
-            display: inline-block;
-            background: transparent;
-            color: var(--accent);
-            border: 2px solid var(--accent);
-            padding: 1rem 3rem;
-            text-decoration: none;
-            font-size: 1.1rem;
-            transition: all 0.3s;
-            font-family: 'Courier New', monospace;
-        }
-
-        .cta-button:hover {
-            background: var(--accent);
-            color: var(--bg);
-            box-shadow: 0 0 40px rgba(255, 0, 255, 0.4);
-        }
-
-        footer {
-            text-align: center;
-            padding: 2rem 0;
-            border-top: 1px solid var(--dim);
-            margin-top: 4rem;
-        }
-
-        .powered {
-            color: var(--dim);
-            font-size: 0.9rem;
-        }
-
-        .powered a {
-            color: var(--fg);
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        .powered a:hover {
-            color: var(--accent);
-        }
-
-        @media (max-width: 768px) {
-            body {
-                padding: 1rem;
-            }
-
-            h1 {
-                font-size: 2rem;
-            }
-
-            .hero-text {
-                font-size: 1.1rem;
-            }
-
-            .libraries {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+@media(max-width:640px){
+  header,div.content{padding-left:20px;padding-right:20px;}
+  .desktop{height:auto;flex-direction:column;}
+  .tty{min-height:120px;}
+}
+</style>
 </head>
 <body>
-    <div class="serpent-background">
-        <canvas id="serpent-canvas"></canvas>
+
+<!-- BOOT OVERLAY -->
+<div id="boot">
+  <div class="boot-box">
+    <div class="boot-title">JEZABEL OS v2.7.1 — INIT</div>
+    <div id="boot-log"></div>
+  </div>
+</div>
+
+<!-- SERPENT BG -->
+<div class="serpent-background"><canvas id="serpent-canvas"></canvas></div>
+
+<!-- HEADER -->
+<header>
+  <div>
+    <div class="logo">jezabel.net</div>
+    <div class="logo-sub">hacker's sparring system</div>
+  </div>
+  <a href="login/" class="nav-login">[ authenticate ]</a>
+</header>
+
+<div class="content">
+
+  <!-- HERO -->
+  <section class="hero">
+    <h1>jezabel.net</h1>
+    <p class="tagline">hacker's sparring system · code · exploit · iterate</p>
+
+    <!-- DESKTOP MOCKUP: 3 fake terminal windows -->
+    <div class="desktop">
+      <div class="tty gr" style="flex:1.1">
+        <div class="tty-bar">
+          <span class="tty-dot"></span><span class="tty-dot"></span><span class="tty-dot"></span>
+          <span class="tty-title">jezabel@net:~/codex</span>
+        </div>
+        <div class="tty-body">
+          <div class="tty-line hi">$ ls -la exercises/</div>
+          <div class="tty-line">drwxr-xr-x  <span class="hi">javascript/</span>  47 modules</div>
+          <div class="tty-line">drwxr-xr-x  <span class="hi">python/</span>       12 modules</div>
+          <div class="tty-line">drwxr-xr-x  <span class="hi">linux/</span>        23 modules</div>
+          <div class="tty-line">drwxr-xr-x  <span class="hi">linux-fixes/</span>   8 modules</div>
+          <div class="tty-line" style="margin-top:4px">total: 90 modules indexed</div>
+          <div class="tty-line hi">$ <span class="blink">_</span></div>
+        </div>
+      </div>
+      <div class="tty mg" style="flex:.8">
+        <div class="tty-bar">
+          <span class="tty-dot"></span><span class="tty-dot"></span><span class="tty-dot"></span>
+          <span class="tty-title">net monitor</span>
+        </div>
+        <div class="tty-body">
+          <div class="tty-line hi">NETWORK MONITOR</div>
+          <div class="tty-line">──────────────────</div>
+          <div class="tty-line">active:   <span class="hi">1 session</span></div>
+          <div class="tty-line">threats:  NONE</div>
+          <div class="tty-line">uptime:   99.9%</div>
+          <div class="tty-line">scan:     00:04:31</div>
+          <div class="tty-line" style="margin-top:4px">status: <span class="hi">MONITORING <span class="blink">▮</span></span></div>
+        </div>
+      </div>
+      <div class="tty cy" style="flex:.9">
+        <div class="tty-bar">
+          <span class="tty-dot"></span><span class="tty-dot"></span><span class="tty-dot"></span>
+          <span class="tty-title">codex status</span>
+        </div>
+        <div class="tty-body">
+          <div class="tty-line hi">ACCESS STATUS</div>
+          <div class="tty-line">──────────────────</div>
+          <div class="tty-line">level:    GUEST</div>
+          <div class="tty-line">modules:  <span class="hi">LOCKED</span></div>
+          <div class="tty-line">auth:     REQUIRED</div>
+          <div class="tty-line" style="margin-top:4px">> ssh jezabel@net</div>
+          <div class="tty-line">> authenticate to unlock<span class="blink">_</span></div>
+        </div>
+      </div>
     </div>
-    
-    <div class="container">
-        <header>
-            <h1>jezabel.net</h1>
-            <p class="tagline">hacker's codex / curated code library</p>
-        </header>
+  </section>
 
-        <section class="hero">
-            <p class="hero-text" id="typing-text"></p>
-        </section>
-
-        <section class="codex-intro">
-            <h2>the codex</h2>
-            <p style="color: var(--dim); margin-bottom: 1rem;">
-                not scripts. not snippets. complete modules.
-                battle-tested. production-ready. ethical or otherwise.
-            </p>
-            <div class="code-sample">
-                <code>
-→ import { exploit } from 'jezabel/core';<br>
-→ const target = document.querySelector('.vulnerable');<br>
-→ exploit.execute(target, payload);<br>
-<span style="color: var(--dim)">// your code. your rules.</span>
-                </code>
-            </div>
-        </section>
-
-        <section class="libraries">
-            <div class="library">
-                <div class="library-lang">javascript</div>
-                <h3 class="library-title">core exploits</h3>
-                <p class="library-desc">
-                    DOM manipulation. XSS vectors. Event hijacking.
-                    The fundamentals every hacker needs.
-                </p>
-                <div class="library-stats">
-                    <span class="stat-item">◉ 47 modules</span>
-                    <span class="stat-item">◉ es6+</span>
-                </div>
-            </div>
-
-            <div class="library">
-                <div class="library-lang">html</div>
-                <h3 class="library-title">structural patterns</h3>
-                <p class="library-desc">
-                    Semantic bypass. Form injection. Template exploits.
-                    Structure is vulnerability.
-                </p>
-                <div class="library-stats">
-                    <span class="stat-item">◉ 23 patterns</span>
-                    <span class="stat-item">◉ html5</span>
-                </div>
-            </div>
-
-            <div class="library">
-                <div class="library-lang">css</div>
-                <h3 class="library-title">visual deception</h3>
-                <p class="library-desc">
-                    Overlay attacks. UI redressing. Clickjacking frameworks.
-                    What you see isn't what you get.
-                </p>
-                <div class="library-stats">
-                    <span class="stat-item">◉ 31 techniques</span>
-                    <span class="stat-item">◉ css3</span>
-                </div>
-            </div>
-        </section>
-
-        <section class="manifesto">
-            <h3>hacker ethos</h3>
-            <ul>
-                <li>code shared is code multiplied</li>
-                <li>no paywall. no gatekeeping. pure knowledge.</li>
-                <li>white hat. black hat. gray hat. we serve all.</li>
-                <li>learn. apply. contribute back.</li>
-                <li>the web is malleable. bend it to your will.</li>
-            </ul>
-        </section>
-
-        <section class="access-section">
-            <h2>access the library</h2>
-            <div class="access-terminal">
-                <div class="terminal-line">$ <span>jezabel init</span></div>
-                <div class="terminal-line">→ authenticating...</div>
-                <div class="terminal-line">→ codex access: <span>granted</span></div>
-                <div class="terminal-line">→ modules available: <span>101</span></div>
-                <div class="terminal-line">$ <input type="text" id="terminal-input" style="background: transparent; border: none; color: #ff00ff; font-family: 'Courier New', monospace; font-size: inherit; outline: none; width: 80%;" placeholder="type 'jezabel init' to scramble"></div>
-            </div>
-            <p style="color: var(--dim); margin-top: 1rem;">
-                browse. download. implement. no restrictions.
-            </p>
-        </section>
-
-        <section class="cta">
-            <p class="cta-text">ready to enter the codex?</p>
-            <a href="#" class="cta-button">access library</a>
-        </section>
+  <!-- LOCKED MODULES -->
+  <section class="modules">
+    <div class="mod">
+      <div class="mod-lang-tag">JAVASCRIPT · ES6+</div>
+      <div class="mod-name">core exercises</div>
+      <div class="mod-desc">DOM events · canvas manipulation · interactive programs · first principles</div>
+      <div class="mod-lock">
+        <span>⬡ LOCKED</span>
+        <a href="login/">authenticate →</a>
+      </div>
     </div>
+    <div class="mod">
+      <div class="mod-lang-tag">PYTHON · 3.x</div>
+      <div class="mod-name">cli architecture</div>
+      <div class="mod-desc">argparse mastery · @classmethod patterns · professional cli app design</div>
+      <div class="mod-lock">
+        <span>⬡ LOCKED</span>
+        <a href="login/">authenticate →</a>
+      </div>
+    </div>
+    <div class="mod">
+      <div class="mod-lang-tag">LINUX · BASH</div>
+      <div class="mod-name">system administration</div>
+      <div class="mod-desc">linuxMagick · symlinks · raspberry pi · file ops · system config</div>
+      <div class="mod-lock">
+        <span>⬡ LOCKED</span>
+        <a href="login/">authenticate →</a>
+      </div>
+    </div>
+  </section>
 
-    <footer>
-        <p class="powered">powered by <a href="https://lempyra.com">Lempyrλ</a></p>
-    </footer>
-    
-    <script>
-        // Fast typing animation for hero text
-        const heroText = "knowledge is power. code is knowledge. a library built by hackers, for hackers. js. html. css. the trinity of the web. exploit. create. dominate.";
-        const typingElement = document.getElementById('typing-text');
-        let charIndex = 0;
-        
-        function typeCharacter() {
-            if (charIndex < heroText.length) {
-                typingElement.textContent = heroText.substring(0, charIndex + 1);
-                charIndex++;
-                // Fast typing: 20ms per character (50 chars/second)
-                setTimeout(typeCharacter, 20);
-            } else {
-                // Add blinking cursor after typing completes
-                const cursor = document.createElement('span');
-                cursor.className = 'typing-cursor';
-                typingElement.appendChild(cursor);
-            }
-        }
-        
-        // Start typing on page load
-        window.addEventListener('load', () => {
-            setTimeout(typeCharacter, 500); // Small delay before starting
-        });
-        
+  <!-- MANIFESTO -->
+  <section class="manifesto">
+    <h3>hacker ethos</h3>
+    <ul>
+      <li>sparring builds instinct. code builds tools. tools build power.</li>
+      <li>not scripts. not snippets. complete modules. battle-tested.</li>
+      <li>the terminal is the interface. everything else is decoration.</li>
+      <li>learn by doing. break things. fix things. repeat.</li>
+      <li>your own system. your own rules. no gatekeeping.</li>
+    </ul>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta">
+    <div class="cta-ssh">
+      <span class="prompt">$</span>
+      <span class="cmd">ssh jezabel@net</span>
+    </div>
+    <a href="login/" class="cta-btn">[ access the codex ]</a>
+  </section>
+
+</div>
+
+<footer>
+  powered by <a href="https://lempyra.com">Lempyrλ</a> &nbsp;·&nbsp; jezabel.net
+</footer>
+
+<script>
+// ─ BOOT SEQUENCE ─
+var BOOT_MSGS=[
+  {t:'[ 0.0001 ] loading kernel modules...',cls:'boot-line',delay:0},
+  {t:'[ 0.0023 ] mounting encrypted volumes...',cls:'boot-line',delay:160},
+  {t:'[ 0.0891 ] initializing exercise modules...',cls:'boot-line',delay:300},
+  {t:'[ 0.1204 ]   javascript/  ............... OK',cls:'boot-line ok',delay:460},
+  {t:'[ 0.1891 ]   python/      ............... OK',cls:'boot-line ok',delay:580},
+  {t:'[ 0.2341 ]   linux/       ............... OK',cls:'boot-line ok',delay:700},
+  {t:'[ 0.2891 ] connecting to sar1a.lempyra.com... OK',cls:'boot-line ok',delay:860},
+  {t:'[ 0.3012 ] [WARN] 847 unauthorized attempts in last 24h',cls:'boot-line warn',delay:1000},
+  {t:'[ 0.4521 ] codex index loaded: 90 modules',cls:'boot-line ok',delay:1160},
+  {t:'[ 0.5234 ] serpent network: ACTIVE',cls:'boot-line ok',delay:1300},
+  {t:'[ 0.5891 ] auth daemon: READY',cls:'boot-line ok',delay:1420},
+  {t:'━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',cls:'boot-line hi',delay:1560},
+  {t:'  JEZABEL OS v2.7.1 — READY — ACCESS LEVEL: GUEST',cls:'boot-line hi',delay:1660},
+];
+(function(){
+  var log=document.getElementById('boot-log');
+  BOOT_MSGS.forEach(function(m){
+    setTimeout(function(){
+      var d=document.createElement('div');
+      d.className=m.cls;d.textContent=m.t;
+      log.appendChild(d);
+    },m.delay);
+  });
+  setTimeout(function(){
+    document.getElementById('boot').classList.add('out');
+    setTimeout(function(){document.getElementById('boot').style.display='none';},700);
+  },2200);
+})();
+
         // SLYTHERIN CONSTELLATION - Connect the Dots with Hacker Colors
         const serpentCanvas = document.getElementById('serpent-canvas');
         const sCtx = serpentCanvas.getContext('2d');
@@ -739,69 +647,35 @@
         initHackerStars();
         animateSerpents();
         
-        // ========================================
-        // TEXT SCRAMBLE FEATURE
-        // ========================================
-        let originalText = {};
-        let isScrambled = false;
-        
-        function scrambleText() {
-            const elements = document.querySelectorAll('p, h1, h2, h3, li, .feature-desc, .hero-text, .cta-text, .manifesto li');
-            
-            elements.forEach((el, index) => {
-                if (!isScrambled) {
-                    // Save original text
-                    originalText[index] = el.textContent;
-                    
-                    // Scramble: same length, random letters
-                    const scrambled = el.textContent
-                        .split('')
-                        .map(char => {
-                            if (char === ' ' || char === '\n') return char;
-                            if (char.match(/[a-z]/i)) {
-                                // Random lowercase letter
-                                return String.fromCharCode(97 + Math.floor(Math.random() * 26));
-                            }
-                            if (char.match(/[A-Z]/)) {
-                                // Random uppercase letter
-                                return String.fromCharCode(65 + Math.floor(Math.random() * 26));
-                            }
-                            return char; // Keep punctuation
-                        })
-                        .join('');
-                    
-                    el.textContent = scrambled;
-                } else {
-                    // Restore original
-                    el.textContent = originalText[index];
-                }
-            });
-            
-            isScrambled = !isScrambled;
-        }
-        
-        // Terminal command listener
-        const terminalInput = document.getElementById('terminal-input');
-        
-        if (terminalInput) {
-            terminalInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    const cmd = terminalInput.value.trim().toLowerCase();
-                    
-                    if (cmd === 'jezabel init') {
-                        scrambleText();
-                        terminalInput.value = '';
-                        
-                        // Flash effect
-                        document.body.style.transition = 'opacity 0.1s';
-                        document.body.style.opacity = '0.5';
-                        setTimeout(() => {
-                            document.body.style.opacity = '1';
-                        }, 100);
-                    }
-                }
-            });
-        }
-    </script>
+
+// ─ TEXT SCRAMBLE ─
+var originalText={};var isScrambled=false;
+function scrambleText(){
+  var els=document.querySelectorAll('p,h1,.tagline,.mod-desc,.manifesto li,.cta-ssh');
+  els.forEach(function(el,i){
+    originalText[i]=el.textContent;
+    setTimeout(function(){
+      var chars='!@#$%^&*<>?/\\|{}[]01';
+      var scrambled=el.textContent.split('').map(function(c){
+        return Math.random()>.4?chars[Math.floor(Math.random()*chars.length)]:c;
+      }).join('');
+      el.textContent=scrambled;
+    },i*80);
+  });
+  isScrambled=true;
+}
+function restoreText(){
+  var els=document.querySelectorAll('p,h1,.tagline,.mod-desc,.manifesto li,.cta-ssh');
+  els.forEach(function(el,i){
+    if(originalText[i]!==undefined) setTimeout(function(){el.textContent=originalText[i];},i*40);
+  });
+  isScrambled=false;
+}
+document.addEventListener('keydown',function(e){
+  if(e.key==='s'&&!e.target.matches('input,textarea')){
+    isScrambled?restoreText():scrambleText();
+  }
+});
+</script>
 </body>
 </html>
