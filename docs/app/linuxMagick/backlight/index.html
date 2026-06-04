@@ -980,9 +980,35 @@
         tinput.focus();
     }
 
-    // ─── BOOT: auto-type the 3-step lesson (cat → trap → fix) ──────────────
-    // Types each command character-by-character (like the user is typing it),
-    // then runs the matching COMMANDS handler so the output looks real.
+    // ─── BOOT: print intro + wait for user-initiated start ─────────────────
+    // 2026-06-04 — L flagged the prior auto-play boot sequence as a potential
+    // CVE-class concern. See note block in `screens:` handler + the
+    // BROWSER-AUTOPLAY-BYPASS section in
+    // ~/Public/claude/hλvoc/FRONTEND-SPECIALIST.md. Specifically:
+    //
+    //   Earlier boot script called COMMANDS.startTraining() programmatically
+    //   ~1s after page load. startTraining → screenOn → YT.Player.playVideo().
+    //   Because the iframe loaded muted, browser autoplay policy did NOT
+    //   block it (muted media gets a permissive default). The user never
+    //   pressed anything — the video began on its own.
+    //
+    //   This is not a YouTube bug — but the general pattern (scripted
+    //   simulation of user gestures + media APIs) is the family of
+    //   techniques adware/malvertising uses for forced autoplay, fullscreen
+    //   prompts, clipboard hijacks, "ad survey" modals, etc.
+    //
+    // Per L: no auto-typed lesson sequence at all. Print the intro and
+    // STOP. Lesson begins only when the user types `start training - music
+    // screen on` (or clicks the ▶ chip) — a real user gesture.
+    window.addEventListener('load', async () => {
+        await tline('jezabel backlight terminal — sysfs screen toggle', 'accent', 800);
+        await tline('─'.repeat(52), 'dim', 900);
+        await tline("type 'start training - music screen on' to begin (or click the chip).", 'info', 1000);
+        await blank(150);
+        await tline("other commands: help · cat · cat screens · mistake · off · on · clear", 'output', 250);
+    });
+
+    // Kept for chip handlers / programmatic use; no boot caller invokes it now.
     async function autoType(cmd, perChar = 38) {
         for (let i = 1; i <= cmd.length; i++) {
             tinput.value = cmd.substring(0, i);
@@ -992,36 +1018,6 @@
         tinput.value = '';
         echoCmd(cmd);
     }
-
-    window.addEventListener('load', async () => {
-        await tline('jezabel backlight terminal — sysfs screen toggle', 'accent', 800);
-        await tline('─'.repeat(52), 'dim', 900);
-        await tline("type 'start training - music screen on' to begin (or use the chip).", 'info', 1000);
-        await blank(1200);
-
-        // STEP 0: open the lesson (powers on the screen / starts the music)
-        await autoType('start training - music screen on');
-        await COMMANDS.startTraining();
-        await blank(1600);
-
-        // STEP 1: discover the max
-        await autoType('cat /sys/class/backlight/intel_backlight/max_brightness');
-        await COMMANDS.cat();
-        await blank(1400);
-
-        // STEP 2: the trap (sudo echo > file)
-        await autoType('sudo echo 0 > /sys/class/backlight/intel_backlight/max_brightness');
-        await COMMANDS.mistake();
-        await blank(1600);
-
-        // STEP 3: the fix (echo | sudo tee) — actually pauses the player
-        await autoType('echo 0 | sudo tee /sys/class/backlight/intel_backlight/brightness');
-        await COMMANDS.off();
-        await blank(800);
-
-        await tline("screen is off. to bring it back, type:  on   (or:  echo 999 | sudo tee …/brightness)", 'accent', 200);
-        await blank(1050);
-    });
 
     // ─── PARTICLE BACKGROUND ──────────────────────────────────────────────────
     const serpentCanvas = document.getElementById('serpent-canvas');
