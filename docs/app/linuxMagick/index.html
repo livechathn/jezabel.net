@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FILE NAVIGATOR</title>
+<link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -234,7 +235,16 @@
     <script>
         let showHidden = false;
         let sortBy = 'name';
-        
+
+        // Hardcoded lesson catalog — used when autoindex isn't available
+        // (e.g. GitHub Pages). On havoc nginx the live autoindex wins and
+        // shows untracked folders too. Long-term: lessons load from a DB
+        // and this constant goes away.
+        const LESSONS = [
+            { name: 'symlink',   type: 'folder', size: 0, isParent: false, href: 'symlink/' },
+            { name: 'backlight', type: 'folder', size: 0, isParent: false, href: 'backlight/' },
+        ];
+
         const FILE_TYPES = {
             audio: ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a', 'wma'], 
             video: ['mp4', 'avi', 'mkv', 'mov', 'wmv', 'webm', 'flv'],
@@ -374,18 +384,9 @@
                 renderFiles(items);
                 updatePathDisplay();
             } catch (error) {
-                if (error.message === 'AUTOINDEX_NOT_FOUND') {
-                    container.innerHTML = `<div class="error">❌ <strong>Nginx autoindex not enabled</strong><br><br>
-                        This file needs autoindex to work.<br><br>
-                        Your nginx config looks correct. Make sure:<br>
-                        1. You reload nginx: <code>nginx -s reload</code><br>
-                        2. Remove or rename this index.html temporarily to see raw autoindex<br>
-                        3. Then put it back</div>`;
-                } else if (error.message === 'NO_LISTING') {
-                    container.innerHTML = `<div class="error">❌ Cannot read directory listing</div>`;
-                } else {
-                    container.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
-                }
+                // No nginx autoindex (e.g. GH Pages) → fall back to hardcoded LESSONS catalog.
+                renderFiles(LESSONS);
+                updatePathDisplay();
             }
         }
         

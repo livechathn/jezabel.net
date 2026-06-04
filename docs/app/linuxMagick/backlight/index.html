@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>jezabel.net - backlight codex / sysfs screen toggle</title>
+<link rel="icon" type="image/svg+xml" href="../../../assets/favicon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0d0015;
+            --fg: #f0e0ff;
+            --accent: #ff00ff;
+            --green: #00ff88;
+            --dim: #7a4a7a;
+            --darker: #050008;
+            --yellow: #ffdd00;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.6;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .serpent-background {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1;
+        }
+
+        #serpent-canvas {
+            width: 100%; height: 100%;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            flex: 1;
+        }
+
+        header {
+            margin-bottom: 4rem;
+            border-bottom: 1px solid var(--dim);
+            padding-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 300;
+            letter-spacing: -2px;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+            text-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+        }
+
+        .tagline {
+            color: var(--dim);
+            font-size: 1.1rem;
+        }
+
+        .hero {
+            margin-bottom: 4rem;
+        }
+
+        .hero-text {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            line-height: 1.8;
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1.2em;
+            background: var(--accent);
+            margin-left: 2px;
+            animation: blink 0.7s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* CONCEPT BLOCKS */
+        .concept-block {
+            background: var(--darker);
+            border: 1px solid var(--dim);
+            border-left: 3px solid var(--accent);
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .concept-block h2 {
+            font-size: 1.8rem;
+            font-weight: 300;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .concept-block p {
+            color: var(--dim);
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .concept-block p strong {
+            color: var(--fg);
+        }
+
+        /* DIAGRAM */
+        .diagram {
+            background: #000;
+            border: 1px solid var(--accent);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+
+        .diagram-line {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .diagram-node {
+            color: var(--green);
+            background: rgba(0, 255, 136, 0.08);
+            border: 1px solid var(--green);
+            padding: 0.2rem 0.6rem;
+            font-size: 0.85rem;
+        }
+
+        .diagram-node.accent {
+            color: var(--accent);
+            background: rgba(255, 0, 255, 0.08);
+            border-color: var(--accent);
+        }
+
+        .diagram-node.bad {
+            color: #ff4444;
+            background: rgba(255, 68, 68, 0.08);
+            border-color: #ff4444;
+        }
+
+        .diagram-arrow {
+            color: var(--yellow);
+            font-size: 1rem;
+        }
+
+        .diagram-label {
+            color: var(--dim);
+            font-size: 0.8rem;
+            font-style: italic;
+        }
+
+        /* KNOWLEDGE GRID */
+        .knowledge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .knowledge-card {
+            border: 1px solid var(--dim);
+            padding: 1.8rem;
+            background: var(--darker);
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .knowledge-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.12);
+        }
+
+        .knowledge-card::before {
+            content: attr(data-glyph);
+            position: absolute;
+            top: 0.5rem;
+            right: 0.8rem;
+            color: var(--dim);
+            font-size: 1.4rem;
+        }
+
+        .card-label {
+            color: var(--accent);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            margin-bottom: 0.8rem;
+            color: var(--fg);
+        }
+
+        .card-body {
+            color: var(--dim);
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+
+        .card-body code {
+            color: var(--green);
+            font-size: 0.85rem;
+        }
+
+        /* RULES */
+        .rules-block {
+            border: 1px solid var(--dim);
+            padding: 2rem;
+            margin-bottom: 4rem;
+            background: var(--darker);
+        }
+
+        .rules-block h3 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-weight: 300;
+        }
+
+        .rules-block ul {
+            list-style: none;
+            color: var(--dim);
+        }
+
+        .rules-block li {
+            margin-bottom: 0.6rem;
+            padding-left: 1rem;
+        }
+
+        .rules-block li::before {
+            content: "→ ";
+            color: var(--accent);
+        }
+
+        .rules-block li strong {
+            color: var(--fg);
+        }
+
+        /* ===== INTERACTIVE TERMINAL ===== */
+        .terminal-section {
+            background: var(--darker);
+            border: 2px solid var(--accent);
+            padding: 0;
+            margin-bottom: 4rem;
+        }
+
+        .terminal-titlebar {
+            background: rgba(255, 0, 255, 0.12);
+            border-bottom: 1px solid var(--accent);
+            padding: 0.6rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--dim);
+        }
+
+        .terminal-dot.red { background: #ff5f56; }
+        .terminal-dot.yellow { background: #ffbd2e; }
+        .terminal-dot.green { background: #27c93f; }
+
+        .terminal-title {
+            flex: 1;
+            text-align: center;
+            color: var(--dim);
+            font-size: 0.85rem;
+        }
+
+        .terminal-body {
+            padding: 1.5rem;
+            min-height: 380px;
+            max-height: 520px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--dim) transparent;
+        }
+
+        .t-line {
+            margin-bottom: 0.35rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .t-line.prompt { color: var(--fg); }
+        .t-line.output { color: var(--dim); }
+        .t-line.success { color: var(--green); }
+        .t-line.error   { color: #ff4444; }
+        .t-line.info    { color: var(--yellow); }
+        .t-line.accent  { color: var(--accent); }
+        .t-line.blank   { height: 0.6rem; }
+
+        .t-prompt-sym { color: var(--accent); }
+        .t-user       { color: var(--green); }
+        .t-host       { color: var(--accent); }
+        .t-path       { color: var(--yellow); }
+
+        .terminal-input-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-top: 1px solid var(--dim);
+            padding: 0.8rem 1.5rem;
+            background: rgba(0,0,0,0.3);
+        }
+
+        .terminal-prompt-label {
+            color: var(--dim);
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .terminal-prompt-label .t-user { color: var(--green); }
+        .terminal-prompt-label .t-host { color: var(--accent); }
+        .terminal-prompt-label .t-path { color: var(--yellow); }
+        .terminal-prompt-label .t-sym  { color: var(--fg); }
+
+        #terminal-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--fg);
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            outline: none;
+            caret-color: var(--accent);
+        }
+
+        #terminal-input::placeholder {
+            color: var(--dim);
+            opacity: 0.5;
+        }
+
+        .hint-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            border-top: 1px solid rgba(122,74,122,0.3);
+        }
+
+        .hint-chip {
+            background: rgba(255,0,255,0.07);
+            border: 1px solid var(--dim);
+            color: var(--dim);
+            padding: 0.2rem 0.7rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Courier New', monospace;
+        }
+
+        .hint-chip:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(255,0,255,0.12);
+        }
+
+        /* FOOTER */
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            border-top: 1px solid var(--dim);
+            margin-top: 4rem;
+        }
+
+        .powered {
+            color: var(--dim);
+            font-size: 0.9rem;
+        }
+
+        .powered a {
+            color: var(--fg);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .powered a:hover { color: var(--accent); }
+
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            h1 { font-size: 2rem; }
+            .hero-text { font-size: 1.1rem; }
+            .knowledge-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<script src="../../../auth-guard.js"></script>
+    <div class="serpent-background">
+        <canvas id="serpent-canvas"></canvas>
+    </div>
+
+    <div class="container">
+
+        <!-- HEADER -->
+        <header>
+            <h1>jezabel.net</h1>
+            <p class="tagline">backlight codex / sysfs screen toggle / the sudo tee dance</p>
+        </header>
+
+        <!-- HERO -->
+        <section class="hero">
+            <p class="hero-text" id="typing-text"></p>
+        </section>
+
+        <!-- CONCEPT: THE SCREEN IS A FILE -->
+        <section class="concept-block">
+            <h2>// the screen is a file</h2>
+            <p>
+                linux exposes the GPU's backlight as a regular file under <strong>/sys/class/backlight/</strong>.
+                write a number, brightness changes. instantly. no daemon, no API, no GUI.
+            </p>
+            <p>
+                <strong>/sys/class/backlight/intel_backlight/brightness</strong> is the lever.
+                write <strong>0</strong> → screen black. write <strong>max_brightness</strong> → screen back.
+                first read the max to know your range:
+            </p>
+
+            <div class="diagram">
+                <div class="diagram-line">
+                    <span class="diagram-label">step 1 — discover your max:</span>
+                </div>
+                <div class="diagram-line" style="margin-left: 1rem;">
+                    <span class="diagram-node">cat /sys/class/backlight/intel_backlight/max_brightness</span>
+                </div>
+                <div class="diagram-line" style="margin-left: 1rem;">
+                    <span class="diagram-arrow">↓</span>
+                    <span class="diagram-label">prints e.g.</span>
+                    <span class="diagram-node accent">96000</span>
+                </div>
+                <div class="diagram-line" style="margin-top: 1rem;">
+                    <span class="diagram-label">step 2 — write to brightness:</span>
+                </div>
+                <div class="diagram-line" style="margin-left: 1rem;">
+                    <span class="diagram-node accent">0</span>
+                    <span class="diagram-arrow">→</span>
+                    <span class="diagram-node">brightness</span>
+                    <span class="diagram-label">= screen off</span>
+                </div>
+                <div class="diagram-line" style="margin-left: 1rem;">
+                    <span class="diagram-node accent">96000</span>
+                    <span class="diagram-arrow">→</span>
+                    <span class="diagram-node">brightness</span>
+                    <span class="diagram-label">= screen on</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONCEPT: THE SUDO TEE DANCE -->
+        <section class="concept-block">
+            <h2>// the sudo tee dance</h2>
+            <p>
+                everyone trips on this. you try <strong>sudo echo 0 &gt; brightness</strong> and get
+                <em style="color:#ff4444">"permission denied"</em>. but you used sudo. what gives?
+            </p>
+            <p>
+                the <strong>&gt;</strong> redirect is interpreted by your <strong>shell</strong>, not by echo.
+                and your shell runs as you — not as root. sudo only elevates the command after it,
+                which here is <strong>echo</strong>. the file open for write happens before sudo gets a turn.
+            </p>
+
+            <div class="diagram">
+                <div class="diagram-line">
+                    <span class="diagram-label">the trap:</span>
+                </div>
+                <div class="diagram-line" style="margin-left: 1rem;">
+                    <span class="diagram-node bad">sudo echo 0 &gt; /sys/.../brightness</span>
+                </div>
+                <div class="diagram-line" style="margin-left: 1rem;">
+                    <span class="diagram-arrow">↓</span>
+                    <span class="diagram-label">shell (as YOU) opens brightness for write</span>
+                </div>
+                <div class="diagram-line" style="margin-left: 1rem;">
+                    <span class="diagram-arrow">✕</span>
+                    <span class="diagram-label" style="color:#ff4444">permission denied — root-only file</span>
+                </div>
+
+                <div class="diagram-line" style="margin-top: 1.2rem;">
+                    <span class="diagram-label">the fix:</span>
+                </div>
+                <div class="diagram-line" style="margin-left: 1rem;">
+                    <span class="diagram-node accent">echo 0 | sudo tee /sys/.../brightness</span>
+                </div>
+                <div class="diagram-line" style="margin-left: 1rem;">
+                    <span class="diagram-arrow">↓</span>
+                    <span class="diagram-label">shell pipes 0 to sudo tee (still as YOU, but pipe is allowed)</span>
+                </div>
+                <div class="diagram-line" style="margin-left: 1rem;">
+                    <span class="diagram-arrow">↓</span>
+                    <span class="diagram-label">sudo elevates tee to ROOT</span>
+                </div>
+                <div class="diagram-line" style="margin-left: 1rem;">
+                    <span class="diagram-arrow">✓</span>
+                    <span class="diagram-label" style="color:var(--green)">tee (as root) writes 0 to brightness</span>
+                </div>
+            </div>
+
+            <p>
+                <strong>tee</strong> is a tiny unix program that reads stdin and writes it to both stdout
+                and any files you name. when you pipe through <strong>sudo tee</strong>, the writing
+                program runs as root. the redirect problem is gone.
+            </p>
+        </section>
+
+        <!-- KNOWLEDGE CARDS -->
+        <section class="knowledge-grid">
+
+            <div class="knowledge-card" data-glyph="◐">
+                <div class="card-label">primary</div>
+                <div class="card-title">intel_backlight</div>
+                <div class="card-body">
+                    on most intel laptops: <code>/sys/class/backlight/intel_backlight/</code>.<br><br>
+                    AMD systems: usually <code>/sys/class/backlight/amdgpu_bl0/</code>.<br><br>
+                    if neither exists, list <code>/sys/class/backlight/</code> — whatever's there is yours.
+                </div>
+            </div>
+
+            <div class="knowledge-card" data-glyph="↥">
+                <div class="card-label">range</div>
+                <div class="card-title">max_brightness</div>
+                <div class="card-body">
+                    <code>cat .../max_brightness</code> first.<br>
+                    you'll see something like <code>96000</code> or <code>7500</code>.<br><br>
+                    your accepted writes are <code>0</code> through that max.
+                    out-of-range values silently clamp.
+                </div>
+            </div>
+
+            <div class="knowledge-card" data-glyph="◯">
+                <div class="card-label">deeper</div>
+                <div class="card-title">fb0/blank</div>
+                <div class="card-body">
+                    <code>/sys/class/graphics/fb0/blank</code> goes one layer deeper:<br><br>
+                    <code>0</code> = unblank (on)<br>
+                    <code>1</code> = blanked<br>
+                    <code>4</code> = full powerdown<br><br>
+                    deeper than backlight — affects the framebuffer itself.
+                </div>
+            </div>
+
+            <div class="knowledge-card" data-glyph="✕">
+                <div class="card-label">trap</div>
+                <div class="card-title">setterm + ssh</div>
+                <div class="card-body">
+                    <code>setterm --blank 1</code> blanks the tty after 1 min idle.<br><br>
+                    over ssh it controls <em>your ssh pty</em>, not the physical console.<br><br>
+                    to blank the real screen: <code>setterm --blank 1 &gt; /dev/tty1</code>.
+                </div>
+            </div>
+
+            <div class="knowledge-card" data-glyph="∞">
+                <div class="card-label">permanent</div>
+                <div class="card-title">consoleblank=N</div>
+                <div class="card-body">
+                    pass <code>consoleblank=N</code> as a kernel boot argument
+                    (N = seconds idle before blank).<br><br>
+                    edit <code>/etc/default/grub</code> → <code>update-grub</code>.<br>
+                    survives every reboot.
+                </div>
+            </div>
+
+            <div class="knowledge-card" data-glyph="⏚">
+                <div class="card-label">why</div>
+                <div class="card-title">headless laptop</div>
+                <div class="card-body">
+                    the most common use: a battery-less laptop running as a server.<br><br>
+                    close the lid = suspend = death.
+                    set <code>HandleLidSwitch=ignore</code> in
+                    <code>/etc/systemd/logind.conf</code>.<br><br>
+                    pair with this lesson: lid stays open, screen stays off.
+                </div>
+            </div>
+
+        </section>
+
+        <!-- RULES -->
+        <section class="rules-block">
+            <h3>backlight doctrine</h3>
+            <ul>
+                <li><strong>never sudo echo &gt; file</strong> — the redirect runs before sudo. shell opens the file as you. perm denied.</li>
+                <li><strong>always echo X | sudo tee path</strong> — tee is the writer; sudo elevates tee, not echo.</li>
+                <li><strong>cat max_brightness first</strong> — don't guess. the value differs across panels (96000 / 7500 / 100).</li>
+                <li><strong>setterm over ssh = wrong target</strong> — point at <code>/dev/tty1</code> for the physical console.</li>
+                <li><strong>consoleblank=N for permanent</strong> — kernel boot arg survives reboot, no daemon needed.</li>
+                <li><strong>headless laptops need this</strong> — paired with <code>HandleLidSwitch=ignore</code>, the lid stays open and the screen stays off.</li>
+            </ul>
+        </section>
+
+        <!-- INTERACTIVE TERMINAL -->
+        <section class="terminal-section">
+            <div class="terminal-titlebar">
+                <div class="terminal-dot red"></div>
+                <div class="terminal-dot yellow"></div>
+                <div class="terminal-dot green"></div>
+                <div class="terminal-title">bash — backlight playground</div>
+            </div>
+
+            <div class="terminal-body" id="terminal-body"></div>
+
+            <div class="hint-bar">
+                <span class="hint-chip" onclick="fillCmd('help')">help</span>
+                <span class="hint-chip" onclick="fillCmd('cat')">1. cat max</span>
+                <span class="hint-chip" onclick="fillCmd('off')">2. off</span>
+                <span class="hint-chip" onclick="fillCmd('on')">3. on</span>
+                <span class="hint-chip" onclick="fillCmd('inspect')">inspect</span>
+                <span class="hint-chip" onclick="fillCmd('blank')">fb0 blank</span>
+                <span class="hint-chip" onclick="fillCmd('setterm')">setterm</span>
+                <span class="hint-chip" onclick="fillCmd('mistake')">try the trap</span>
+                <span class="hint-chip" onclick="fillCmd('clear')">clear</span>
+            </div>
+
+            <div class="terminal-input-row">
+                <span class="terminal-prompt-label">
+                    <span class="t-user">user</span><span style="color:var(--dim)">@</span><span class="t-host">jezabel</span>:<span class="t-path">~</span><span class="t-sym">$</span>
+                </span>
+                <input type="text" id="terminal-input" autocomplete="off" spellcheck="false" placeholder="type a command or click a chip above...">
+            </div>
+        </section>
+
+    </div>
+
+    <footer>
+        <p class="powered">powered by <a href="https://lempyra.com">Lempyrλ</a></p>
+    </footer>
+
+    <script>
+    // ─── TYPING HERO ─────────────────────────────────────────────────────────
+    const heroText = "the screen is a file. write 0, the room goes dark. write the max, the room comes back. it's that simple — but the redirect doesn't go where you think.";
+    const typingEl = document.getElementById('typing-text');
+    let charIdx = 0;
+
+    function typeChar() {
+        if (charIdx < heroText.length) {
+            typingEl.textContent = heroText.substring(0, charIdx + 1);
+            charIdx++;
+            setTimeout(typeChar, 22);
+        } else {
+            const cur = document.createElement('span');
+            cur.className = 'typing-cursor';
+            typingEl.appendChild(cur);
+        }
+    }
+
+    window.addEventListener('load', () => setTimeout(typeChar, 600));
+
+    // ─── TERMINAL ENGINE ──────────────────────────────────────────────────────
+    const tbody = document.getElementById('terminal-body');
+    const tinput = document.getElementById('terminal-input');
+
+    // Simulated state — discovered max + current brightness.
+    let state = {
+        maxBrightness: 96000,
+        current: 96000,
+        knownMax: false,
+    };
+
+    function tline(text, cls = 'output', delay = 0) {
+        return new Promise(res => setTimeout(() => {
+            const d = document.createElement('div');
+            d.className = 't-line ' + cls;
+            d.textContent = text;
+            tbody.appendChild(d);
+            tbody.scrollTop = tbody.scrollHeight;
+            res();
+        }, delay));
+    }
+
+    function blank(delay = 0) { return tline('', 'blank', delay); }
+
+    function echoCmd(cmd) {
+        const d = document.createElement('div');
+        d.className = 't-line prompt';
+        d.innerHTML = `<span style="color:var(--green)">user</span><span style="color:var(--dim)">@</span><span style="color:var(--accent)">jezabel</span>:<span style="color:var(--yellow)">~</span>$ ${cmd}`;
+        tbody.appendChild(d);
+        tbody.scrollTop = tbody.scrollHeight;
+    }
+
+    async function runSequence(lines) {
+        for (const [text, cls, delay] of lines) {
+            await tline(text, cls, delay || 60);
+        }
+    }
+
+    const COMMANDS = {
+
+        help: async () => {
+            await runSequence([
+                ['available commands:', 'accent'],
+                ['', 'blank'],
+                ['  cat       — read max_brightness (run this first)', 'output'],
+                ['  off       — echo 0 | sudo tee brightness  (screen off)', 'output'],
+                ['  on        — echo max | sudo tee brightness (screen on)', 'output'],
+                ['  inspect   — show current brightness value', 'output'],
+                ['  blank     — echo 1 | sudo tee fb0/blank (deeper layer)', 'output'],
+                ['  setterm   — setterm --blank 1 (the ssh-pty gotcha)', 'output'],
+                ['  mistake   — try sudo echo > file (see why it fails)', 'output'],
+                ['  clear     — clear terminal', 'output'],
+                ['', 'blank'],
+                ['tip: click the chips above to auto-fill commands.', 'info'],
+            ]);
+        },
+
+        cat: async () => {
+            await tline('$ cat /sys/class/backlight/intel_backlight/max_brightness', 'prompt', 0);
+            await tline('96000', 'success', 400);
+            await blank(200);
+            await tline('→ your panel accepts writes 0..96000.', 'info', 200);
+            state.knownMax = true;
+        },
+
+        off: async () => {
+            if (!state.knownMax) {
+                await tline('$ echo 0 | sudo tee /sys/class/backlight/intel_backlight/brightness', 'prompt', 0);
+                await tline('0', 'output', 400);
+                await blank(200);
+                await tline('→ screen went black. (you didn\'t check max — risky habit.)', 'info', 200);
+            } else {
+                await tline('$ echo 0 | sudo tee /sys/class/backlight/intel_backlight/brightness', 'prompt', 0);
+                await tline('0', 'output', 400);
+                await blank(200);
+                await tline('→ screen off. backlight driver received 0.', 'success', 200);
+            }
+            state.current = 0;
+        },
+
+        on: async () => {
+            await tline(`$ echo ${state.maxBrightness} | sudo tee /sys/class/backlight/intel_backlight/brightness`, 'prompt', 0);
+            await tline(`${state.maxBrightness}`, 'output', 400);
+            await blank(200);
+            await tline('→ screen back. full brightness.', 'success', 200);
+            state.current = state.maxBrightness;
+        },
+
+        inspect: async () => {
+            await tline('$ cat /sys/class/backlight/intel_backlight/brightness', 'prompt', 0);
+            await tline(`${state.current}`, 'success', 400);
+            await blank(200);
+            await tline(`→ current brightness: ${state.current}/${state.maxBrightness}`, 'info', 200);
+        },
+
+        blank: async () => {
+            await tline('$ echo 1 | sudo tee /sys/class/graphics/fb0/blank', 'prompt', 0);
+            await tline('1', 'output', 400);
+            await blank(200);
+            await tline('→ framebuffer blanked. deeper than backlight — the panel itself is told to stop.', 'info', 200);
+            await blank(150);
+            await tline('  values:  0=unblanked   1=blanked   4=full powerdown', 'output', 150);
+            await blank(150);
+            await tline('  caveat: on some kernels fb0/blank is gone or merged into DRM.', 'info', 200);
+        },
+
+        setterm: async () => {
+            await tline('$ setterm --blank 1', 'prompt', 0);
+            await tline('(no output — controls THIS tty)', 'output', 400);
+            await blank(200);
+            await tline('→ blank-after-1-min set on YOUR pty.', 'info', 200);
+            await blank(150);
+            await tline('  over ssh this is your ssh pty, NOT the physical console.', 'info', 150);
+            await tline('  for the real screen: setterm --blank 1 > /dev/tty1', 'success', 150);
+            await blank(150);
+            await tline('  permanent? kernel arg: consoleblank=60', 'accent', 200);
+        },
+
+        mistake: async () => {
+            await tline('$ sudo echo 0 > /sys/class/backlight/intel_backlight/brightness', 'prompt', 0);
+            await tline('bash: /sys/class/backlight/intel_backlight/brightness: Permission denied', 'error', 400);
+            await blank(200);
+            await tline('→ classic. you used sudo, why the permission denied?', 'info', 200);
+            await blank(150);
+            await tline('   the > redirect is run by your SHELL, before sudo.', 'output', 200);
+            await tline('   the shell opens the file as YOU. you are not root.', 'output', 200);
+            await tline('   sudo only elevates echo — and echo never touches the file.', 'output', 200);
+            await blank(150);
+            await tline('   the fix: pipe through sudo tee instead. try:  off', 'accent', 200);
+        },
+
+        clear: async () => {
+            tbody.innerHTML = '';
+            await tline('terminal cleared.', 'dim');
+        },
+    };
+
+    // Aliases
+    COMMANDS['cat max'] = COMMANDS.cat;
+    COMMANDS['cat max_brightness'] = COMMANDS.cat;
+    COMMANDS['fb0'] = COMMANDS.blank;
+    COMMANDS['fb0 blank'] = COMMANDS.blank;
+    COMMANDS['try the trap'] = COMMANDS.mistake;
+
+    tinput.addEventListener('keypress', async (e) => {
+        if (e.key !== 'Enter') return;
+        const raw = tinput.value.trim();
+        tinput.value = '';
+        if (!raw) return;
+
+        echoCmd(raw);
+
+        const key = raw.toLowerCase();
+        const handler = COMMANDS[key];
+
+        if (handler) {
+            await handler();
+        } else {
+            await tline(`bash: command not found: ${raw}`, 'error', 100);
+            await tline("type 'help' to see available commands.", 'info', 100);
+        }
+
+        await blank(50);
+    });
+
+    function fillCmd(cmd) {
+        tinput.value = cmd;
+        tinput.focus();
+    }
+
+    // Boot message
+    window.addEventListener('load', async () => {
+        await tline('jezabel backlight terminal — sysfs screen toggle', 'accent', 800);
+        await tline('─'.repeat(52), 'dim', 900);
+        await tline("type 'help' or click a chip to begin. try 'mistake' to see the trap.", 'info', 1000);
+        await blank(1050);
+    });
+
+    // ─── PARTICLE BACKGROUND ──────────────────────────────────────────────────
+    const serpentCanvas = document.getElementById('serpent-canvas');
+    const sCtx = serpentCanvas.getContext('2d');
+    let hackerStars = [];
+    let mouse = { x: null, y: null };
+    const codeWords = ['backlight', 'sudo tee', 'sysfs', '/sys', 'intel', 'brightness', 'fb0', 'setterm', 'consoleblank', 'tty1'];
+
+    function resizeCanvas() {
+        serpentCanvas.width = window.innerWidth;
+        serpentCanvas.height = window.innerHeight;
+    }
+
+    class HackerStar {
+        constructor() {
+            this.x = Math.random() * serpentCanvas.width;
+            this.y = Math.random() * serpentCanvas.height;
+            this.vx = (Math.random() - 0.5) * 0.4;
+            this.vy = (Math.random() - 0.5) * 0.4;
+            this.radius = Math.random() * 2 + 1;
+            this.brightness = Math.random() * 0.5 + 0.5;
+            this.color = Math.random() > 0.5 ? '#ff00ff' : '#00ff88';
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy;
+            if (this.x < 0) this.x = serpentCanvas.width;
+            if (this.x > serpentCanvas.width) this.x = 0;
+            if (this.y < 0) this.y = serpentCanvas.height;
+            if (this.y > serpentCanvas.height) this.y = 0;
+            this.brightness += (Math.random() - 0.5) * 0.03;
+            this.brightness = Math.max(0.3, Math.min(1, this.brightness));
+        }
+        draw() {
+            sCtx.beginPath();
+            sCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            sCtx.fillStyle = this.color + Math.floor(this.brightness * 255).toString(16).padStart(2, '0');
+            sCtx.shadowBlur = 8; sCtx.shadowColor = this.color;
+            sCtx.fill(); sCtx.shadowBlur = 0;
+        }
+    }
+
+    function initStars() {
+        hackerStars = [];
+        const n = Math.floor((serpentCanvas.width * serpentCanvas.height) / 8000);
+        for (let i = 0; i < n; i++) hackerStars.push(new HackerStar());
+    }
+
+    function drawConnections() {
+        for (let i = 0; i < hackerStars.length; i++) {
+            for (let j = i + 1; j < hackerStars.length; j++) {
+                const dx = hackerStars[i].x - hackerStars[j].x;
+                const dy = hackerStars[i].y - hackerStars[j].y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < 130) {
+                    const op = (1 - dist/130) * 0.35;
+                    sCtx.beginPath();
+                    sCtx.strokeStyle = hackerStars[i].color + Math.floor(op*255).toString(16).padStart(2,'0');
+                    sCtx.lineWidth = 0.7;
+                    sCtx.moveTo(hackerStars[i].x, hackerStars[i].y);
+                    sCtx.lineTo(hackerStars[j].x, hackerStars[j].y);
+                    sCtx.stroke();
+                }
+            }
+            if (mouse.x !== null) {
+                const dx = mouse.x - hackerStars[i].x;
+                const dy = mouse.y - hackerStars[i].y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < 180) {
+                    const op = (1 - dist/180) * 0.5;
+                    sCtx.beginPath();
+                    sCtx.strokeStyle = hackerStars[i].color + Math.floor(op*255).toString(16).padStart(2,'0');
+                    sCtx.lineWidth = 1.2;
+                    sCtx.moveTo(mouse.x, mouse.y);
+                    sCtx.lineTo(hackerStars[i].x, hackerStars[i].y);
+                    sCtx.stroke();
+                }
+            }
+        }
+    }
+
+    function drawWords() {
+        const visited = new Set();
+        hackerStars.forEach((star, idx) => {
+            if (visited.has(idx)) return;
+            const cluster = [star]; visited.add(idx);
+            hackerStars.forEach((o, oi) => {
+                if (visited.has(oi)) return;
+                const dx = star.x - o.x; const dy = star.y - o.y;
+                if (Math.sqrt(dx*dx+dy*dy) < 90) { cluster.push(o); visited.add(oi); }
+            });
+            if (cluster.length >= 5) {
+                const cx = cluster.reduce((s,c)=>s+c.x,0)/cluster.length;
+                const cy = cluster.reduce((s,c)=>s+c.y,0)/cluster.length;
+                const op = 0.1 + Math.random()*0.2;
+                sCtx.font = '12px Courier New';
+                sCtx.fillStyle = cluster[0].color + Math.floor(op*255).toString(16).padStart(2,'0');
+                sCtx.textAlign = 'center';
+                sCtx.fillText(codeWords[Math.floor(Math.random()*codeWords.length)], cx, cy);
+            }
+        });
+    }
+
+    function animate() {
+        sCtx.fillStyle = 'rgba(13,0,21,0.08)';
+        sCtx.fillRect(0, 0, serpentCanvas.width, serpentCanvas.height);
+        hackerStars.forEach(s => { s.update(); s.draw(); });
+        drawConnections();
+        if (Math.random() < 0.012) drawWords();
+        requestAnimationFrame(animate);
+    }
+
+    serpentCanvas.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    serpentCanvas.addEventListener('mouseleave', () => { mouse.x = null; mouse.y = null; });
+
+    serpentCanvas.addEventListener('click', e => {
+        for (let i = 0; i < 12; i++) {
+            const star = new HackerStar();
+            star.x = e.clientX; star.y = e.clientY;
+            const angle = (Math.PI*2/12)*i;
+            star.vx = Math.cos(angle)*5; star.vy = Math.sin(angle)*5;
+            hackerStars.push(star);
+        }
+        if (hackerStars.length > 220) hackerStars.splice(0, 12);
+    });
+
+    window.addEventListener('resize', () => { resizeCanvas(); initStars(); });
+    resizeCanvas(); initStars(); animate();
+    </script>
+</body>
+</html>
