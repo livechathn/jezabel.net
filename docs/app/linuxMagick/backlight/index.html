@@ -809,6 +809,21 @@
         },
 
         screens: async () => {
+            // ─── FUTURE-REVIEW NOTE (L, 2026-06-04) ───────────────────────────
+            // L's exact words (preserved verbatim, partial sentence, more later):
+            //   "leave a not on this specific lesson for a future review:
+            //    cat available screens variant be one of Lempyra's main Lisp
+            //    git be. More on this later."
+            //
+            // hλvoc interpretation (revisit with L before acting):
+            //   the `cat (available) screens` variant — DRM/sysfs display
+            //   enumeration — may become one of Lempyra's main "Lisp git" …
+            //   (repo? primitive? example?). Direction unclear; do not refactor
+            //   this command without checking back with L.
+            //
+            // Mirror: ~/Public/claude/hλvoc/FRONTEND-SPECIALIST.md "Future review"
+            // section.
+            // ─────────────────────────────────────────────────────────────────
             // The "file is a screen" metaphor extends: every display device
             // on the box shows up as a folder under /sys/class/. Two paths
             // matter — backlight-controllable panels and DRM connectors.
