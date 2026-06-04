@@ -475,6 +475,7 @@
             <div class="terminal-body" id="terminal-body"></div>
 
             <div class="hint-bar">
+                <span class="hint-chip" onclick="fillCmd('start training - music screen on')">▶ start training</span>
                 <span class="hint-chip" onclick="fillCmd('help')">help</span>
                 <span class="hint-chip" onclick="fillCmd('cat')">cat max</span>
                 <span class="hint-chip" onclick="fillCmd('mistake')">try the trap</span>
@@ -501,7 +502,7 @@
             <div class="player-wrap">
                 <iframe
                     id="yt-player"
-                    src="https://www.youtube-nocookie.com/embed/ZneepN5qNxo?enablejsapi=1&autoplay=1&mute=1&playsinline=1"
+                    src="https://www.youtube-nocookie.com/embed/ZneepN5qNxo?enablejsapi=1&playsinline=1"
                     title="backlight lesson"
                     frameborder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -784,6 +785,7 @@
             await runSequence([
                 ['available commands:', 'accent'],
                 ['', 'blank'],
+                ['  start training - music screen on  — begin the lesson (plays the screen)', 'output'],
                 ['  cat       — read max_brightness (run this first)', 'output'],
                 ['  off       — echo 0 | sudo tee brightness  (screen off)', 'output'],
                 ['  on        — echo max | sudo tee brightness (screen on)', 'output'],
@@ -795,6 +797,13 @@
                 ['', 'blank'],
                 ['tip: click the chips above to auto-fill commands.', 'info'],
             ]);
+        },
+
+        startTraining: async () => {
+            await tline('→ powering the screen … music starts.', 'info', 0);
+            await blank(200);
+            screenOn();
+            await tline('→ lesson begins. read the terminal — and watch.', 'accent', 400);
         },
 
         cat: async () => {
@@ -878,6 +887,10 @@
     COMMANDS['fb0'] = COMMANDS.blank;
     COMMANDS['fb0 blank'] = COMMANDS.blank;
     COMMANDS['try the trap'] = COMMANDS.mistake;
+    // Lesson opener (L's canonical command name + short aliases)
+    COMMANDS['start training - music screen on'] = COMMANDS.startTraining;
+    COMMANDS['start training'] = COMMANDS.startTraining;
+    COMMANDS['start'] = COMMANDS.startTraining;
     // Literal-command aliases so typing the actual sysfs writes works too
     COMMANDS['echo 0 | sudo tee /sys/class/backlight/intel_backlight/brightness'] = COMMANDS.off;
     COMMANDS['echo 999 | sudo tee /sys/class/backlight/intel_backlight/brightness'] = COMMANDS.on;
@@ -926,8 +939,13 @@
     window.addEventListener('load', async () => {
         await tline('jezabel backlight terminal — sysfs screen toggle', 'accent', 800);
         await tline('─'.repeat(52), 'dim', 900);
-        await tline('lesson autoplay starting — watch the trap, then the fix.', 'info', 1000);
+        await tline("type 'start training - music screen on' to begin (or use the chip).", 'info', 1000);
         await blank(1200);
+
+        // STEP 0: open the lesson (powers on the screen / starts the music)
+        await autoType('start training - music screen on');
+        await COMMANDS.startTraining();
+        await blank(1600);
 
         // STEP 1: discover the max
         await autoType('cat /sys/class/backlight/intel_backlight/max_brightness');
