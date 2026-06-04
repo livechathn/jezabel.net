@@ -478,6 +478,7 @@
                 <span class="hint-chip" onclick="fillCmd('start training - music screen on')">▶ start training</span>
                 <span class="hint-chip" onclick="fillCmd('help')">help</span>
                 <span class="hint-chip" onclick="fillCmd('cat')">cat max</span>
+                <span class="hint-chip" onclick="fillCmd('cat screens')">cat screens</span>
                 <span class="hint-chip" onclick="fillCmd('mistake')">try the trap</span>
                 <span class="hint-chip" onclick="fillCmd('off')">off</span>
                 <span class="hint-chip" onclick="fillCmd('on')">on</span>
@@ -787,6 +788,7 @@
                 ['', 'blank'],
                 ['  start training - music screen on  — begin the lesson (plays the screen)', 'output'],
                 ['  cat       — read max_brightness (run this first)', 'output'],
+                ['  cat screens  — list every attached display (sysfs + DRM)', 'output'],
                 ['  off       — echo 0 | sudo tee brightness  (screen off)', 'output'],
                 ['  on        — echo max | sudo tee brightness (screen on)', 'output'],
                 ['  inspect   — show current brightness value', 'output'],
@@ -804,6 +806,42 @@
             await blank(200);
             screenOn();
             await tline('→ lesson begins. read the terminal — and watch.', 'accent', 400);
+        },
+
+        screens: async () => {
+            // The "file is a screen" metaphor extends: every display device
+            // on the box shows up as a folder under /sys/class/. Two paths
+            // matter — backlight-controllable panels and DRM connectors.
+            await tline('$ ls /sys/class/backlight/', 'prompt', 0);
+            await tline('intel_backlight', 'success', 400);
+            await blank(200);
+            await tline('→ one entry = one panel with a software-controllable backlight.', 'info', 200);
+            await blank(300);
+
+            await tline('$ ls /sys/class/drm/ | grep -E "^card[0-9]+-"', 'prompt', 400);
+            await tline('card1-DP-1', 'output', 300);
+            await tline('card1-DP-2', 'output', 200);
+            await tline('card1-eDP-1', 'output', 200);
+            await tline('card1-HDMI-A-1', 'output', 200);
+            await blank(200);
+            await tline('→ every port the GPU exposes. eDP = embedded (laptop panel).', 'info', 200);
+            await blank(300);
+
+            await tline('$ for c in /sys/class/drm/card*-*/status; do', 'prompt', 400);
+            await tline('>   printf "%-22s %s\\n" "$(basename $(dirname $c))" "$(cat $c)"', 'prompt', 100);
+            await tline('> done', 'prompt', 100);
+            await tline('card1-DP-1             disconnected', 'output', 400);
+            await tline('card1-DP-2             disconnected', 'output', 200);
+            await tline('card1-eDP-1            connected      ← internal panel', 'success', 200);
+            await tline('card1-HDMI-A-1         connected      ← external monitor', 'success', 200);
+            await blank(200);
+            await tline('→ "connected" means a cable is physically plugged in.', 'info', 200);
+            await blank(150);
+            await tline('  the backlight trick (echo X | sudo tee …/brightness) works on', 'output', 150);
+            await tline('  panels that have an intel_backlight/amdgpu_bl0 entry above —', 'output', 150);
+            await tline('  external monitors get their brightness from THEIR firmware, not yours.', 'output', 200);
+            await blank(150);
+            await tline('  ddcutil can drive an external monitor over the cable: ddcutil setvcp 10 50', 'accent', 200);
         },
 
         cat: async () => {
@@ -891,6 +929,10 @@
     COMMANDS['start training - music screen on'] = COMMANDS.startTraining;
     COMMANDS['start training'] = COMMANDS.startTraining;
     COMMANDS['start'] = COMMANDS.startTraining;
+    // Discover all attached displays — sysfs/DRM enumeration
+    COMMANDS['cat screens'] = COMMANDS.screens;
+    COMMANDS['ls screens'] = COMMANDS.screens;
+    COMMANDS['screens'] = COMMANDS.screens;
     // Literal-command aliases so typing the actual sysfs writes works too
     COMMANDS['echo 0 | sudo tee /sys/class/backlight/intel_backlight/brightness'] = COMMANDS.off;
     COMMANDS['echo 999 | sudo tee /sys/class/backlight/intel_backlight/brightness'] = COMMANDS.on;
