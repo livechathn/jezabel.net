@@ -386,6 +386,35 @@
             background: rgba(255,0,255,0.12);
         }
 
+        /* SCREEN PLAYER (YouTube iframe wrapped to keep the chassis palette) */
+        .player-section {
+            border: 1px solid var(--dim);
+            background: var(--darker);
+            margin-bottom: 4rem;
+        }
+        .player-titlebar {
+            background: rgba(255, 0, 255, 0.06);
+            border-bottom: 1px solid var(--dim);
+            padding: 0.6rem 1rem;
+        }
+        .player-label {
+            color: var(--accent);
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+        .player-wrap {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%;  /* 16:9 */
+            background: #000;
+        }
+        .player-wrap iframe {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            border: none;
+        }
+
         /* FOOTER */
         footer {
             text-align: center;
@@ -432,6 +461,53 @@
         <!-- HERO -->
         <section class="hero">
             <p class="hero-text" id="typing-text"></p>
+        </section>
+
+        <!-- INTERACTIVE TERMINAL (autoplays the lesson: cat → trap → fix) -->
+        <section class="terminal-section">
+            <div class="terminal-titlebar">
+                <div class="terminal-dot red"></div>
+                <div class="terminal-dot yellow"></div>
+                <div class="terminal-dot green"></div>
+                <div class="terminal-title">bash — backlight playground</div>
+            </div>
+
+            <div class="terminal-body" id="terminal-body"></div>
+
+            <div class="hint-bar">
+                <span class="hint-chip" onclick="fillCmd('help')">help</span>
+                <span class="hint-chip" onclick="fillCmd('cat')">cat max</span>
+                <span class="hint-chip" onclick="fillCmd('mistake')">try the trap</span>
+                <span class="hint-chip" onclick="fillCmd('off')">off</span>
+                <span class="hint-chip" onclick="fillCmd('on')">on</span>
+                <span class="hint-chip" onclick="fillCmd('blank')">fb0 blank</span>
+                <span class="hint-chip" onclick="fillCmd('setterm')">setterm</span>
+                <span class="hint-chip" onclick="fillCmd('clear')">clear</span>
+            </div>
+
+            <div class="terminal-input-row">
+                <span class="terminal-prompt-label">
+                    <span class="t-user">user</span><span style="color:var(--dim)">@</span><span class="t-host">jezabel</span>:<span class="t-path">~</span><span class="t-sym">$</span>
+                </span>
+                <input type="text" id="terminal-input" autocomplete="off" spellcheck="false" placeholder="type a command or click a chip above...">
+            </div>
+        </section>
+
+        <!-- SCREEN PLAYER (YouTube — currently hardcoded for testing) -->
+        <section class="player-section">
+            <div class="player-titlebar">
+                <span class="player-label">// screen — watch the lesson</span>
+            </div>
+            <div class="player-wrap">
+                <iframe
+                    id="yt-player"
+                    src="https://www.youtube-nocookie.com/embed/ZneepN5qNxo?enablejsapi=1&autoplay=1&mute=1&playsinline=1"
+                    title="backlight lesson"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen></iframe>
+            </div>
         </section>
 
         <!-- CONCEPT: THE SCREEN IS A FILE -->
@@ -617,37 +693,6 @@
             </ul>
         </section>
 
-        <!-- INTERACTIVE TERMINAL -->
-        <section class="terminal-section">
-            <div class="terminal-titlebar">
-                <div class="terminal-dot red"></div>
-                <div class="terminal-dot yellow"></div>
-                <div class="terminal-dot green"></div>
-                <div class="terminal-title">bash — backlight playground</div>
-            </div>
-
-            <div class="terminal-body" id="terminal-body"></div>
-
-            <div class="hint-bar">
-                <span class="hint-chip" onclick="fillCmd('help')">help</span>
-                <span class="hint-chip" onclick="fillCmd('cat')">1. cat max</span>
-                <span class="hint-chip" onclick="fillCmd('off')">2. off</span>
-                <span class="hint-chip" onclick="fillCmd('on')">3. on</span>
-                <span class="hint-chip" onclick="fillCmd('inspect')">inspect</span>
-                <span class="hint-chip" onclick="fillCmd('blank')">fb0 blank</span>
-                <span class="hint-chip" onclick="fillCmd('setterm')">setterm</span>
-                <span class="hint-chip" onclick="fillCmd('mistake')">try the trap</span>
-                <span class="hint-chip" onclick="fillCmd('clear')">clear</span>
-            </div>
-
-            <div class="terminal-input-row">
-                <span class="terminal-prompt-label">
-                    <span class="t-user">user</span><span style="color:var(--dim)">@</span><span class="t-host">jezabel</span>:<span class="t-path">~</span><span class="t-sym">$</span>
-                </span>
-                <input type="text" id="terminal-input" autocomplete="off" spellcheck="false" placeholder="type a command or click a chip above...">
-            </div>
-        </section>
-
     </div>
 
     <footer>
@@ -674,14 +719,35 @@
 
     window.addEventListener('load', () => setTimeout(typeChar, 600));
 
+    // ─── YOUTUBE PLAYER (the "screen") ────────────────────────────────────────
+    // The iframe is the screen. echo 0 (off) → pauseVideo. echo 999 (on) →
+    // playVideo. The boot demo runs cat → trap → fix and pauses at the end —
+    // user types `on` (or `echo 999 | sudo tee ...`) to bring the screen back.
+    let ytPlayer = null;
+    let ytReady = false;
+    (function loadYT() {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(tag);
+    })();
+    window.onYouTubeIframeAPIReady = function () {
+        ytPlayer = new YT.Player('yt-player', {
+            events: {
+                onReady: () => { ytReady = true; }
+            }
+        });
+    };
+    function screenOff() { if (ytReady && ytPlayer) ytPlayer.pauseVideo(); }
+    function screenOn()  { if (ytReady && ytPlayer) ytPlayer.playVideo(); }
+
     // ─── TERMINAL ENGINE ──────────────────────────────────────────────────────
     const tbody = document.getElementById('terminal-body');
     const tinput = document.getElementById('terminal-input');
 
     // Simulated state — discovered max + current brightness.
     let state = {
-        maxBrightness: 96000,
-        current: 96000,
+        maxBrightness: 999,
+        current: 999,
         knownMax: false,
     };
 
@@ -733,24 +799,18 @@
 
         cat: async () => {
             await tline('$ cat /sys/class/backlight/intel_backlight/max_brightness', 'prompt', 0);
-            await tline('96000', 'success', 400);
+            await tline('999', 'success', 400);
             await blank(200);
-            await tline('→ your panel accepts writes 0..96000.', 'info', 200);
+            await tline('→ your panel accepts writes 0..999.', 'info', 200);
             state.knownMax = true;
         },
 
         off: async () => {
-            if (!state.knownMax) {
-                await tline('$ echo 0 | sudo tee /sys/class/backlight/intel_backlight/brightness', 'prompt', 0);
-                await tline('0', 'output', 400);
-                await blank(200);
-                await tline('→ screen went black. (you didn\'t check max — risky habit.)', 'info', 200);
-            } else {
-                await tline('$ echo 0 | sudo tee /sys/class/backlight/intel_backlight/brightness', 'prompt', 0);
-                await tline('0', 'output', 400);
-                await blank(200);
-                await tline('→ screen off. backlight driver received 0.', 'success', 200);
-            }
+            await tline('$ echo 0 | sudo tee /sys/class/backlight/intel_backlight/brightness', 'prompt', 0);
+            await tline('0', 'output', 400);
+            await blank(200);
+            await tline('→ screen off. backlight driver received 0.', 'success', 200);
+            screenOff();
             state.current = 0;
         },
 
@@ -759,6 +819,7 @@
             await tline(`${state.maxBrightness}`, 'output', 400);
             await blank(200);
             await tline('→ screen back. full brightness.', 'success', 200);
+            screenOn();
             state.current = state.maxBrightness;
         },
 
@@ -793,8 +854,8 @@
         },
 
         mistake: async () => {
-            await tline('$ sudo echo 0 > /sys/class/backlight/intel_backlight/brightness', 'prompt', 0);
-            await tline('bash: /sys/class/backlight/intel_backlight/brightness: Permission denied', 'error', 400);
+            await tline('$ sudo echo 0 > /sys/class/backlight/intel_backlight/max_brightness', 'prompt', 0);
+            await tline('bash: /sys/class/backlight/intel_backlight/max_brightness: Permission denied', 'error', 400);
             await blank(200);
             await tline('→ classic. you used sudo, why the permission denied?', 'info', 200);
             await blank(150);
@@ -817,6 +878,11 @@
     COMMANDS['fb0'] = COMMANDS.blank;
     COMMANDS['fb0 blank'] = COMMANDS.blank;
     COMMANDS['try the trap'] = COMMANDS.mistake;
+    // Literal-command aliases so typing the actual sysfs writes works too
+    COMMANDS['echo 0 | sudo tee /sys/class/backlight/intel_backlight/brightness'] = COMMANDS.off;
+    COMMANDS['echo 999 | sudo tee /sys/class/backlight/intel_backlight/brightness'] = COMMANDS.on;
+    COMMANDS['sudo echo 0 > /sys/class/backlight/intel_backlight/max_brightness'] = COMMANDS.mistake;
+    COMMANDS['sudo echo 0 > /sys/class/backlight/intel_backlight/brightness'] = COMMANDS.mistake;
 
     tinput.addEventListener('keypress', async (e) => {
         if (e.key !== 'Enter') return;
@@ -844,11 +910,41 @@
         tinput.focus();
     }
 
-    // Boot message
+    // ─── BOOT: auto-type the 3-step lesson (cat → trap → fix) ──────────────
+    // Types each command character-by-character (like the user is typing it),
+    // then runs the matching COMMANDS handler so the output looks real.
+    async function autoType(cmd, perChar = 38) {
+        for (let i = 1; i <= cmd.length; i++) {
+            tinput.value = cmd.substring(0, i);
+            await new Promise(r => setTimeout(r, perChar + Math.random() * 30));
+        }
+        await new Promise(r => setTimeout(r, 250));
+        tinput.value = '';
+        echoCmd(cmd);
+    }
+
     window.addEventListener('load', async () => {
         await tline('jezabel backlight terminal — sysfs screen toggle', 'accent', 800);
         await tline('─'.repeat(52), 'dim', 900);
-        await tline("type 'help' or click a chip to begin. try 'mistake' to see the trap.", 'info', 1000);
+        await tline('lesson autoplay starting — watch the trap, then the fix.', 'info', 1000);
+        await blank(1200);
+
+        // STEP 1: discover the max
+        await autoType('cat /sys/class/backlight/intel_backlight/max_brightness');
+        await COMMANDS.cat();
+        await blank(1400);
+
+        // STEP 2: the trap (sudo echo > file)
+        await autoType('sudo echo 0 > /sys/class/backlight/intel_backlight/max_brightness');
+        await COMMANDS.mistake();
+        await blank(1600);
+
+        // STEP 3: the fix (echo | sudo tee) — actually pauses the player
+        await autoType('echo 0 | sudo tee /sys/class/backlight/intel_backlight/brightness');
+        await COMMANDS.off();
+        await blank(800);
+
+        await tline("screen is off. to bring it back, type:  on   (or:  echo 999 | sudo tee …/brightness)", 'accent', 200);
         await blank(1050);
     });
 
