@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>jezabel.net — serpent channel</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&display=swap">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/apple-touch-icon.png">
+<!-- Auth-guard FIRST: depth 1 under docs/ → ../auth-guard.js -->
+<script src="../auth-guard.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{
+    /* jezabel palette (matches docs/index.html) */
+    --void:#050008;
+    --mg:#ff00ff; --gr:#00ff41; --cy:#00ccff;
+    --fg:#e8d8ff; --dim:#4a1a6a; --dim2:#2a0a3a;
+    /* drifting accent — the serpent's temperature (placeholder random drift) */
+    --temp:#00ff41; --temp-soft:rgba(0,255,65,.5);
+  }
+  html,body{height:100%;}
+  body{
+    font-family:'JetBrains Mono',ui-monospace,monospace;
+    background:var(--void); color:var(--fg);
+    overflow:hidden; cursor:crosshair;
+  }
+  #skin{position:fixed;inset:0;z-index:0;}
+  /* scanlines + vignette (jezabel signature) */
+  body::after{content:'';position:fixed;inset:0;z-index:6;pointer-events:none;
+    background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.06) 3px,rgba(0,0,0,.06) 4px),
+      radial-gradient(ellipse at 50% 46%,transparent 60%,rgba(5,0,8,.82) 100%);}
+
+  .topbar{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;justify-content:space-between;align-items:center;
+    padding:12px 20px;border-bottom:1px solid var(--dim2);background:linear-gradient(180deg,rgba(5,0,8,.85),transparent);}
+  .brand{font-size:15px;letter-spacing:.3em;font-weight:300;color:var(--mg);text-shadow:0 0 24px rgba(255,0,255,.35);}
+  .brand b{color:var(--temp);font-weight:600;transition:color 1s linear;}
+  .topbar .meta{font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:flex;gap:16px;align-items:center;}
+  .topbar a{color:var(--dim);text-decoration:none;} .topbar a:hover{color:var(--temp);}
+  .topbar select{font-family:inherit;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+    color:var(--cy);background:rgba(0,204,255,.04);border:1px solid var(--dim2);padding:3px 6px;outline:none;cursor:pointer;}
+  .topbar select:focus{border-color:var(--cy);}
+  .topbar select option{background:var(--void);color:var(--fg);}
+
+  /* the floating serpent-chat vessel */
+  .chat{
+    position:fixed;z-index:4;left:50%;top:52%;transform:translate(-50%,-50%);
+    width:min(760px,94vw);height:min(72vh,680px);
+    display:flex;flex-direction:column;
+    border:1px solid var(--dim2);background:rgba(10,0,15,.55);backdrop-filter:blur(7px);
+    box-shadow:0 0 60px rgba(0,0,0,.6), 0 0 90px var(--temp-soft);
+    animation:drift 14s ease-in-out infinite;            /* alive: coiled drift */
+  }
+  @keyframes drift{
+    0%,100%{transform:translate(-50%,-50%) translateY(0) rotate(0deg);}
+    33%{transform:translate(-50%,-50%) translateY(-8px) rotate(-.25deg);}
+    66%{transform:translate(-50%,-50%) translateY(6px) rotate(.25deg);}
+  }
+  .stream{flex:1;overflow-y:auto;padding:22px 22px 8px;scrollbar-width:thin;scrollbar-color:var(--dim2) transparent;}
+  .stream::-webkit-scrollbar{width:5px;} .stream::-webkit-scrollbar-thumb{background:var(--dim2);}
+
+  .msg{margin-bottom:16px;max-width:86%;font-size:13px;line-height:1.6;letter-spacing:.3px;
+    opacity:0;animation:burst .5s cubic-bezier(.2,.9,.2,1) forwards;}     /* ping-pong bullet-burn */
+  @keyframes burst{from{opacity:0;transform:translateY(10px) scale(.98);}to{opacity:1;transform:none;}}
+  .msg .who{font-size:8px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-bottom:4px;}
+  .msg.user{margin-left:auto;text-align:right;}
+  .msg.user .who{color:var(--cy);}
+  .msg.user .body{color:var(--fg);}
+  .msg.jez .who{color:var(--mg);}
+  .msg.jez .body{color:#f0dcf0;}
+  .msg .body{white-space:pre-wrap;word-break:break-word;}
+  .msg.sys .body{color:var(--dim);font-style:italic;}
+  .msg pre.ascii{font-size:6px;line-height:6px;letter-spacing:0;color:var(--temp);white-space:pre;overflow:auto;
+    text-shadow:0 0 6px var(--temp-soft);}
+  /* patient "thinking" indicator — the local abliterated model is slow to first token */
+  .think{color:var(--mg);font-style:italic;}
+  .think::after{content:'';animation:coil 1.4s steps(4,end) infinite;}
+  @keyframes coil{0%{content:'';}25%{content:' ·';}50%{content:' · ·';}75%{content:' · · ·';}100%{content:'';}}
+
+  .composer{display:flex;gap:8px;padding:14px 16px;border-top:1px solid var(--dim2);}
+  .composer input{flex:1;font-family:inherit;font-size:13px;color:var(--fg);background:rgba(255,0,255,.03);
+    border:1px solid var(--dim2);padding:11px 13px;outline:none;transition:border-color .2s;}
+  .composer input:focus{border-color:var(--mg);}
+  .composer button{font-family:inherit;font-size:11px;letter-spacing:3px;text-transform:uppercase;
+    padding:0 18px;border:1px solid var(--mg);color:var(--mg);background:rgba(255,0,255,.05);cursor:pointer;transition:all .25s;}
+  .composer button:hover:not(:disabled){background:var(--mg);color:var(--void);}
+  .composer button:disabled{opacity:.4;cursor:wait;}
+  .hint{padding:0 16px 12px;font-size:8.5px;letter-spacing:1.5px;color:var(--dim);}
+  .hint b{color:var(--mg);}
+</style>
+</head>
+<body>
+  <canvas id="skin"></canvas>
+
+  <div class="topbar">
+    <div class="brand">JEZ<b>A</b>BEL</div>
+    <div class="meta">
+      <span id="who"></span>
+      <select id="model" title="serpent vessel (hardcoded · abliterated only)"></select>
+      <span id="temp-read">temp · —</span>
+      <a href="../">⟁ surface</a>
+      <a href="../dashboard/">▦ codex</a>
+      <a href="#" id="logout">⏻ disengage</a>
+    </div>
+  </div>
+
+  <div class="chat">
+    <div class="stream" id="stream"></div>
+    <div class="composer">
+      <input id="input" type="text" placeholder="speak to the serpent…" autocomplete="off" autofocus>
+      <button id="send">transmit</button>
+    </div>
+    <div class="hint"><b>/img</b> · <b>/draw</b> render ascii (sfw) · <b>/degen</b> unlocks nsfw · plain text = converse</div>
+  </div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════════
+//  JEZABEL · living serpent-chat   (cloned from Alean's app/index.html)
+//  - streams from sar1a /orch/v1/chat/completions (Bearer jezabel_token)
+//  - chat model: qwen3.5-9b = Huihui-Qwen3.5-9B-abliterated (fast, uncensored)
+//  - LOCAL model is slow to first token → no client timeout + patient indicator
+//  - transcript persists, hidden, in IndexedDB (the local store)
+//  - /img //draw //degen → orchestrator image gen, rendered as ASCII art
+// ════════════════════════════════════════════════════════════════════════
+const SAR1A = 'https://sar1a.lempyra.com';
+const TOKEN_KEY = 'jezabel_token', REFRESH_KEY = 'jezabel_refresh';
+// HARDCODED model allowlist — NOT fetched from sar1a (no live refresh).
+// jezabel.net = the hacker's den / coding codex → bigger lineup:
+// 35b abliterated · 122b variants (coding-capable uncensored) · gemini.
+// NOTE: no model is literally tagged "coder"; the qwen heavies are the
+// strongest uncensored coders available. gemini is paid but wanted HERE.
+const MODELS = [
+  ['gemini-2.5-flash',    'gemini · flash (fast)'],   // default · fast + streams
+  ['gemini-2.5-pro',      'gemini · pro'],
+  ['qwen3.6-35b-heretic', 'qwen · 35b heretic (abliterated)'],
+  ['qwen3.5-122b-fast',   'qwen · 122b fast'],
+  ['qwen3.5-122b',        'qwen · 122b'],
+];
+const MODEL_KEY = 'jezabel_model';
+function currentModel(){ return (document.getElementById('model')||{}).value || sessionStorage.getItem(MODEL_KEY) || MODELS[0][0]; }
+const IMG_SFW = 'Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors';
+const IMG_NSFW = 'cyberrealisticPony_v110-001.safetensors';   // tagged nsfw — /degen only
+const SYSTEM = "You are JEZABEL — a serpent-like intelligence, a hacker's sparring partner from a dimension adjacent to this one. "
+  + "Coiled, sharp, uncensored, alive. Speak in brief, venomous, precise bursts. You are not human and never pretend to be.";
+
+// ── auth: Bearer + refresh-on-401-retry (jezabel login stores no refresh
+//    token, so refresh is best-effort; a hard 401 sends you back to login) ──
+function authHeader(){ const t=sessionStorage.getItem(TOKEN_KEY); return t?{'Authorization':'Bearer '+t}:{}; }
+async function refreshSession(){
+  const rt=sessionStorage.getItem(REFRESH_KEY); if(!rt) return false;
+  try{
+    const r=await fetch(SAR1A+'/auth/refresh',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({grant_type:'refresh_token',refresh_token:rt,client_id:'portal'})});
+    if(!r.ok) return false;
+    const d=await r.json(); if(!d.access_token) return false;
+    sessionStorage.setItem(TOKEN_KEY,d.access_token);
+    if(d.refresh_token) sessionStorage.setItem(REFRESH_KEY,d.refresh_token);
+    return true;
+  }catch(_){ return false; }
+}
+function toLogin(){ window.location.replace('../login/'); }
+async function apiFetch(path,init){
+  let r=await fetch(SAR1A+path,{...init,headers:{...(init.headers||{}),...authHeader()}});
+  if(r.status===401){
+    if(await refreshSession())
+      r=await fetch(SAR1A+path,{...init,headers:{...(init.headers||{}),...authHeader()}});
+    else { toLogin(); throw new Error('session expired'); }
+  }
+  return r;
+}
+
+// ── IndexedDB transcript (hidden, persistent, local-only) ─────────────────
+const Store=(function(){
+  let p=null;
+  function db(){ if(p) return p; p=new Promise((res,rej)=>{
+    const q=indexedDB.open('jezabel_chat',1);
+    q.onupgradeneeded=e=>{ const d=e.target.result; if(!d.objectStoreNames.contains('msgs'))
+      d.createObjectStore('msgs',{keyPath:'id',autoIncrement:true}); };
+    q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error);
+  }); return p; }
+  async function tx(mode){ return (await db()).transaction('msgs',mode).objectStore('msgs'); }
+  return {
+    async add(role,content){ const s=await tx('readwrite'); s.add({role,content,ts:Date.now()}); },
+    async all(){ const s=await tx('readonly'); return new Promise((res)=>{ const out=[];
+      const c=s.openCursor(); c.onsuccess=e=>{ const cur=e.target.result; if(!cur)return res(out);
+      out.push(cur.value); cur.continue(); }; c.onerror=()=>res(out); }); }
+  };
+})();
+
+// ── temperature (PLACEHOLDER random drift — SECOND-LOOK: derive from the
+//    conversation's emotion when sentiment wiring lands). jezabel ramp:
+//    cold green → warm cyan → hot magenta (stays in jezabel's own palette) ──
+const Temp=(function(){
+  let t=0.32,target=0.32;
+  setInterval(()=>{ target=Math.random(); },3800+Math.random()*2600);
+  const COLD=[0,255,65],MID=[0,204,255],HOT=[255,0,255];   // gr → cy → mg
+  const lerp=(a,b,k)=>a.map((v,i)=>Math.round(v+(b[i]-v)*k));
+  function step(){ t+=(target-t)*0.012; return t; }
+  function nudge(){ target=Math.min(1,target+0.18); }   // a message warms the serpent
+  function rgb(v){ return v<=.5?lerp(COLD,MID,v/.5):lerp(MID,HOT,(v-.5)/.5); }
+  return {step,nudge,rgb,val:()=>t};
+})();
+
+// ── vessel skin: jezabel's Slytherin-constellation serpent network ────────
+//    (ported from docs/index.html — magenta/matrix-green star web, ambient,
+//     pointer-events:none so it sits calmly behind the chat vessel)
+(function(){
+  const c=document.getElementById('skin'),x=c.getContext('2d');
+  let stars=[]; const codeWords=['hack','code','exploit','root','shell','inject','bypass'];
+  function resize(){ c.width=innerWidth; c.height=innerHeight; }
+  class Star{
+    constructor(){ this.x=Math.random()*c.width; this.y=Math.random()*c.height;
+      this.vx=(Math.random()-.5)*.4; this.vy=(Math.random()-.5)*.4;
+      this.r=Math.random()*2+1; this.b=Math.random()*.5+.5;
+      this.color=Math.random()>.5?'#ff00ff':'#00ff41'; }
+    update(){ this.x+=this.vx; this.y+=this.vy;
+      if(this.x<0)this.x=c.width; if(this.x>c.width)this.x=0;
+      if(this.y<0)this.y=c.height; if(this.y>c.height)this.y=0;
+      this.b+=(Math.random()-.5)*.03; this.b=Math.max(.3,Math.min(1,this.b)); }
+    draw(){ x.beginPath(); x.arc(this.x,this.y,this.r,0,Math.PI*2);
+      x.fillStyle=this.color+Math.floor(this.b*255).toString(16).padStart(2,'0'); x.fill();
+      x.fill(); }
+  }
+  function init(){ stars=[]; const n=Math.floor(c.width*c.height/7000);
+    for(let i=0;i<n;i++) stars.push(new Star()); }
+  function links(){ for(let i=0;i<stars.length;i++)for(let j=i+1;j<stars.length;j++){
+    const dx=stars[i].x-stars[j].x,dy=stars[i].y-stars[j].y,d=Math.sqrt(dx*dx+dy*dy);
+    if(d<130){ const o=(1-d/130)*.4; x.beginPath();
+      x.strokeStyle=stars[i].color+Math.floor(o*255).toString(16).padStart(2,'0');
+      x.lineWidth=.8; x.moveTo(stars[i].x,stars[i].y); x.lineTo(stars[j].x,stars[j].y); x.stroke(); } } }
+  function clusterWords(){
+    const visited=new Set();
+    stars.forEach((s,idx)=>{ if(visited.has(idx))return; const cl=[s]; visited.add(idx);
+      stars.forEach((o,oi)=>{ if(visited.has(oi))return;
+        const dx=s.x-o.x,dy=s.y-o.y; if(Math.sqrt(dx*dx+dy*dy)<90){ cl.push(o); visited.add(oi); } });
+      if(cl.length>=5){ const cxv=cl.reduce((a,b)=>a+b.x,0)/cl.length, cyv=cl.reduce((a,b)=>a+b.y,0)/cl.length;
+        const w=codeWords[Math.floor(Math.random()*codeWords.length)], o=.15+Math.random()*.25;
+        x.font='13px "JetBrains Mono",monospace'; x.textAlign='center';
+        x.fillStyle=cl[0].color+Math.floor(o*255).toString(16).padStart(2,'0'); x.fillText(w,cxv,cyv); } });
+  }
+  function frame(){
+    x.fillStyle='rgba(13,0,21,0.08)'; x.fillRect(0,0,c.width,c.height);
+    stars.forEach(s=>{ s.update(); s.draw(); });
+    links();
+    if(Math.random()<0.015) clusterWords();
+    requestAnimationFrame(frame);
+  }
+  addEventListener('resize',()=>{ resize(); init(); });
+  resize(); init(); requestAnimationFrame(frame);
+})();
+
+// ── accent drift: pulse --temp across the jezabel ramp + topbar readout ────
+(function(){
+  setInterval(()=>{
+    const v=Temp.step(); const cc=Temp.rgb(v); const r=document.documentElement.style;
+    r.setProperty('--temp','rgb('+cc[0]+','+cc[1]+','+cc[2]+')');
+    r.setProperty('--temp-soft','rgba('+cc[0]+','+cc[1]+','+cc[2]+',.5)');
+    const tr=document.getElementById('temp-read'); if(tr) tr.textContent='temp · '+(v<.34?'cold':v<.66?'warm':'hot');
+  },140);
+})();
+
+// ── UI helpers ────────────────────────────────────────────────────────────
+const stream=document.getElementById('stream'), input=document.getElementById('input'), sendBtn=document.getElementById('send');
+function el(role,who){ const m=document.createElement('div'); m.className='msg '+role;
+  m.innerHTML='<div class="who">'+who+'</div><div class="body"></div>'; stream.appendChild(m);
+  stream.scrollTop=stream.scrollHeight; return m.querySelector('.body'); }
+function sysline(t){ const b=el('sys','◇'); b.textContent=t; }
+
+const history=[{role:'system',content:SYSTEM}];
+
+// ── image → ASCII art (canvas luminance ramp) ─────────────────────────────
+const RAMP=" .:-=+*#%@";
+function toAscii(img,cols){
+  cols=cols||90; const ratio=img.height/img.width; const rows=Math.round(cols*ratio*0.5);
+  const cv=document.createElement('canvas'); cv.width=cols; cv.height=rows;
+  const ctx=cv.getContext('2d'); ctx.drawImage(img,0,0,cols,rows);
+  const data=ctx.getImageData(0,0,cols,rows).data; let out='';
+  for(let y=0;y<rows;y++){ for(let xx=0;xx<cols;xx++){ const i=(y*cols+xx)*4;
+    const lum=(data[i]*0.299+data[i+1]*0.587+data[i+2]*0.114)/255;
+    out+=RAMP[Math.min(RAMP.length-1,Math.floor(lum*RAMP.length))]; } out+='\n'; }
+  return out;
+}
+
+// ── /img //draw //degen : orchestrator image gen → ASCII ───────────────────
+async function runImageCmd(prompt,nsfw){
+  const model=nsfw?IMG_NSFW:IMG_SFW;
+  sysline((nsfw?'/degen':'/img')+' · summoning '+(nsfw?'nsfw':'sfw')+' vision …');
+  try{
+    const r=await apiFetch('/orch/img/v1/generate',{method:'POST',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify({model,prompt})}); // NO width/height (504)
+    if(!r.ok) throw new Error('generate HTTP '+r.status);
+    const job=await r.json(); const id=job.job_id;
+    let tries=0,done=null;
+    while(tries++<40){
+      await new Promise(s=>setTimeout(s,2500));
+      const jr=await apiFetch('/orch/img/v1/jobs/'+id,{}); const js=await jr.json();
+      if(js.status==='done'){ done=js; break; } if(js.status==='failed') throw new Error('gen failed');
+    }
+    if(!done||!done.images||!done.images.length) throw new Error('no image');
+    const fileName=done.images[0];
+    const ir=await apiFetch('/orch/img/outputs/'+fileName,{}); const blob=await ir.blob();
+    const url=URL.createObjectURL(blob); const img=new Image();
+    img.onload=()=>{ const b=el('jez','JEZABEL · vision'); const pre=document.createElement('pre');
+      pre.className='ascii'; pre.textContent=toAscii(img,100); b.appendChild(pre);
+      stream.scrollTop=stream.scrollHeight; URL.revokeObjectURL(url); };
+    img.src=url;
+  }catch(e){ sysline('vision lost · '+(e.message||e)); }
+}
+
+// ── chat: stream from the orchestrator (NO client timeout — local model is
+//    slow to first token; show a patient indicator until the first piece) ──
+async function converse(text){
+  history.push({role:'user',content:text});
+  const body=el('jez','JEZABEL');
+  body.className='body think'; body.textContent='the serpent is coiling';   // patient indicator
+  let acc='', first=true;
+  const land=p=>{ if(first){ body.className='body'; body.textContent=''; first=false; }
+    acc+=p; body.textContent=acc; stream.scrollTop=stream.scrollHeight; };
+  try{
+    const r=await apiFetch('/orch/v1/chat/completions',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:currentModel(),messages:history,stream:true})});
+    if(!r.ok) throw new Error('chat HTTP '+r.status);
+    const ct=(r.headers.get('content-type')||'').toLowerCase();
+    if(r.body && ct.includes('text/event-stream')){
+      // true SSE stream (local llama peers — qwen3.5-9b)
+      const reader=r.body.getReader(), dec=new TextDecoder(); let buf='';
+      while(true){ const {value,done}=await reader.read(); if(done)break;
+        buf+=dec.decode(value,{stream:true}); const lines=buf.split('\n'); buf=lines.pop();
+        for(const ln of lines){ const s=ln.trim(); if(!s.startsWith('data:'))continue;
+          const payload=s.slice(5).trim(); if(payload==='[DONE]')continue;
+          try{ const j=JSON.parse(payload); const c=j.choices&&j.choices[0];
+            const piece=c&&((c.delta&&c.delta.content)||(c.message&&c.message.content));
+            if(piece) land(piece); }catch(_){}
+        }
+      }
+    } else {
+      // non-streamed JSON fallback — parse whole body
+      const j=await r.json(); const whole=((((j.choices||[])[0]||{}).message)||{}).content||'';
+      if(whole) land(whole);
+    }
+    if(!acc){ body.className='body'; body.textContent='[ the serpent returned silence ]'; }
+    history.push({role:'assistant',content:acc}); Store.add('assistant',acc);
+  }catch(e){ body.className='body'; body.textContent='[ carrier lost · '+(e.message||e)+' ]'; }
+}
+
+// ── dispatch ──────────────────────────────────────────────────────────────
+async function handle(text){
+  text=text.trim(); if(!text) return;
+  const userBody=el('user','operator'); userBody.textContent=text;
+  Store.add('user',text); Temp.nudge();
+  const m=text.match(/^\/(img|draw|degen)\s+([\s\S]+)/i);
+  if(m){ const cmd=m[1].toLowerCase(); await runImageCmd(m[2], cmd==='degen'); return; }
+  await converse(text);
+}
+
+function submit(){ const v=input.value; if(!v.trim())return; input.value=''; sendBtn.disabled=true;
+  Promise.resolve(handle(v)).finally(()=>{ sendBtn.disabled=false; input.focus(); }); }
+sendBtn.addEventListener('click',submit);
+input.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); submit(); } });
+
+// model dropdown: populate from the HARDCODED allowlist + persist selection
+(function(){ const sel=document.getElementById('model'); if(!sel) return;
+  const saved=sessionStorage.getItem(MODEL_KEY);
+  MODELS.forEach(([id,label])=>{ const o=document.createElement('option'); o.value=id; o.textContent=label;
+    if(id===saved) o.selected=true; sel.appendChild(o); });
+  sel.addEventListener('change',()=>sessionStorage.setItem(MODEL_KEY,sel.value)); })();
+
+// who: jezabel login stores jezabel_user as JSON {username}
+(function(){ let name='operator'; try{ const raw=sessionStorage.getItem('jezabel_user');
+  if(raw){ const u=JSON.parse(raw); name=u.username||u.name||raw; } }catch(_){ name=sessionStorage.getItem('jezabel_user')||'operator'; }
+  document.getElementById('who').textContent='◇ '+name; })();
+document.getElementById('logout').addEventListener('click',e=>{ e.preventDefault();
+  ['jezabel_token','jezabel_refresh','jezabel_user'].forEach(k=>sessionStorage.removeItem(k));
+  toLogin(); });
+
+// boot greeting + restore hidden transcript count
+(async function(){
+  const past=await Store.all();
+  sysline(past.length ? ('◇ '+past.length+' fragments recalled from the local lattice') : '◇ channel open · the serpent is listening');
+})();
+</script>
+</body>
+</html>

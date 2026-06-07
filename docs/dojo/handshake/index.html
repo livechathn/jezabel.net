@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://sar1a.lempyra.com; font-src 'self' https://fonts.gstatic.com; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;">
+<title>jezabel.net — dojo / handshake</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Cuneiform&display=swap">
+<link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="../../assets/favicon-32.png">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#050008;--bg2:#080010;--bg3:#0d0018;
+  --mg:#ff00ff;--mg2:#cc00cc;--gr:#00ff41;--cy:#00ccff;
+  --fg:#e8d8ff;--dim:#3a1a4a;--border:#1a0828;
+  --warn:#cc6600;
+  --fire:#ff7a18;--fire2:#ff3b1f;
+  --temp:#00ff41;--temp-soft:rgba(0,255,65,.5);
+}
+html,body{min-height:100%;}
+body{
+  font-family:'JetBrains Mono',monospace;
+  background:var(--bg);color:var(--fg);
+  position:relative;
+  padding:0 0 60px;
+}
+body::after{
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.06) 3px,rgba(0,0,0,.06) 4px),
+    radial-gradient(ellipse at 50% 30%,transparent 56%,rgba(5,0,8,.78) 100%);
+  pointer-events:none;z-index:9000;
+}
+
+/* ─ STATUSBAR ─ */
+.statusbar{
+  position:relative;z-index:10;
+  height:24px;display:flex;align-items:center;
+  background:rgba(13,0,24,.86);
+  border-bottom:1px solid var(--border);
+  font-size:10px;letter-spacing:.5px;
+}
+.sb{padding:0 12px;height:100%;display:flex;align-items:center;gap:6px;border-right:1px solid var(--border);white-space:nowrap;}
+.sb.mg{color:var(--mg);background:rgba(255,0,255,.04);}
+.sb.mg .glyph{font-weight:600;color:var(--mg);text-shadow:0 0 12px rgba(255,0,255,.5);}
+.sb.gr{color:var(--gr);}
+.sb.dim{color:var(--dim);}
+.sb.grow{flex:1;border-right:none;}
+.sb.right{margin-left:auto;border-right:none;border-left:1px solid var(--border);}
+.sb-dot{width:5px;height:5px;border-radius:50%;display:inline-block;background:var(--temp);box-shadow:0 0 6px var(--temp-soft);}
+
+/* ─ MAIN ─ */
+.main{
+  position:relative;z-index:10;
+  max-width:780px;margin:0 auto;padding:48px 28px 0;
+}
+
+.wordmark{
+  font-family:'Noto Sans Cuneiform','JetBrains Mono',monospace;
+  font-size:13px;letter-spacing:.6em;
+  color:var(--mg);text-shadow:0 0 18px rgba(255,0,255,.45);
+  margin-bottom:6px;text-transform:uppercase;
+}
+.crumb{
+  font-size:10px;letter-spacing:3px;color:var(--dim);
+  text-transform:uppercase;margin-bottom:34px;
+}
+.crumb a{color:var(--dim);text-decoration:none;border-bottom:1px solid transparent;transition:color .15s,border-color .15s;}
+.crumb a:hover{color:var(--mg);border-bottom-color:var(--mg2);}
+
+/* ─ EPIGRAPH ─ */
+.epigraph{
+  border-left:1px solid var(--mg2);
+  padding:14px 22px 16px;
+  margin:0 0 44px;
+  background:linear-gradient(90deg,rgba(255,0,255,.04),transparent 65%);
+}
+.epigraph .marker{
+  font-size:9px;letter-spacing:3px;color:var(--mg);
+  text-transform:uppercase;margin-bottom:12px;
+}
+.epigraph p{
+  font-size:14px;line-height:1.85;color:var(--fg);
+  margin-bottom:10px;
+}
+.epigraph p:last-of-type{margin-bottom:14px;}
+.epigraph .attrib{
+  font-family:'Noto Sans Cuneiform','JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:.4em;color:var(--mg);
+  text-align:right;text-shadow:0 0 12px rgba(255,0,255,.35);
+}
+.epigraph code{
+  color:var(--gr);background:rgba(0,255,65,.06);padding:1px 6px;
+  font-size:12px;letter-spacing:.5px;border:1px solid rgba(0,255,65,.18);
+}
+
+/* ─ PANELS ─ */
+.panel{
+  border:1px solid var(--border);
+  background:rgba(8,0,16,.55);
+  margin-bottom:28px;
+}
+.panel-head{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px;
+  border-bottom:1px solid var(--border);
+  background:rgba(255,0,255,.04);
+}
+.panel-head .num{
+  font-size:10px;letter-spacing:2px;color:var(--mg2);
+  border:1px solid var(--mg2);padding:2px 8px;
+}
+.panel-head .title{
+  font-size:12px;letter-spacing:2px;color:var(--mg);
+  text-transform:uppercase;
+  text-shadow:0 0 10px rgba(255,0,255,.35);
+}
+.panel-body{padding:18px 22px 4px;}
+.panel-body p{font-size:13px;line-height:1.9;color:var(--fg);margin-bottom:14px;}
+.panel-body .lead{color:var(--cy);}
+.panel-body code{
+  color:var(--gr);background:rgba(0,255,65,.06);padding:1px 6px;
+  font-size:12px;letter-spacing:.5px;border:1px solid rgba(0,255,65,.16);
+}
+.panel-body em{color:var(--mg);font-style:normal;}
+
+pre.hs{
+  background:#020006;border:1px solid var(--border);
+  padding:14px 18px;
+  font-size:12px;line-height:1.7;color:var(--gr);
+  letter-spacing:.5px;overflow-x:auto;
+  margin:0 0 14px;
+}
+pre.hs .arrow{color:var(--mg);}
+pre.hs .dim{color:var(--dim);}
+
+/* kata */
+.kata{
+  border-top:1px solid var(--border);
+  padding:14px 22px 16px;
+  display:flex;align-items:flex-start;gap:14px;
+  background:linear-gradient(90deg,rgba(0,255,65,.04),transparent 80%);
+}
+.kata .label{
+  font-family:'Noto Sans Cuneiform','JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:3px;color:var(--gr);
+  text-transform:uppercase;flex-shrink:0;
+  text-shadow:0 0 10px rgba(0,255,65,.4);
+  padding-top:2px;min-width:64px;
+}
+.kata .body{font-size:12px;line-height:1.8;color:var(--fg);}
+.kata code{
+  color:var(--gr);background:rgba(0,255,65,.08);padding:1px 6px;
+  font-size:12px;letter-spacing:.5px;border:1px solid rgba(0,255,65,.18);
+}
+
+/* ─ FOOTER ─ */
+.footer{
+  margin-top:36px;
+  font-size:10px;letter-spacing:2px;color:var(--dim);
+  text-transform:uppercase;text-align:center;
+}
+.footer .sep{color:var(--mg2);}
+</style>
+</head>
+<body>
+
+<div class="statusbar">
+  <div class="sb mg"><span class="glyph">⟁</span> dojo / handshake</div>
+  <div class="sb gr"><span class="sb-dot"></span> session active</div>
+  <div class="sb dim">tcp / asymmetric / palace-channel</div>
+  <div class="sb grow"></div>
+  <div class="sb right dim">2026-05-30</div>
+</div>
+
+<main class="main">
+
+  <div class="wordmark">𒅗 jezabel.net</div>
+  <div class="crumb">
+    <a href="../../">docs</a> &nbsp;/&nbsp;
+    <a href="../">dojo</a> &nbsp;/&nbsp;
+    handshake
+  </div>
+
+  <!-- ═══════════════════ EPIGRAPH ═══════════════════ -->
+  <section class="epigraph">
+    <div class="marker">field-note · L · 2026-05-30</div>
+    <p>Understood &mdash; and that reframes the channel correctly.</p>
+    <p>
+      It&rsquo;s asymmetric: I write to thamon in <code>~/Public/claude/thamon/</code>
+      (you relay it), but thamon writes back into <code>~/Documents</code> &mdash;
+      the palace &mdash; which I can only read, never touch. Thamon is the
+      palace-writer; I&rsquo;m the palace-visitor. My handshake had him
+      replying into <code>~/Public</code>, which he can&rsquo;t do. Fixing all of it.
+    </p>
+    <div class="attrib">&mdash; L</div>
+  </section>
+
+  <!-- ═══════════════════ PANEL 1 ═══════════════════ -->
+  <section class="panel">
+    <div class="panel-head">
+      <span class="num">01</span>
+      <span class="title">The Two Streams</span>
+    </div>
+    <div class="panel-body">
+      <p class="lead">A TCP connection is not one channel. It is two.</p>
+      <p>
+        When two endpoints open a TCP connection, they negotiate <em>two</em>
+        independent sequence-number spaces &mdash; one for bytes traveling
+        client&rarr;server, one for bytes traveling server&rarr;client. The
+        two streams are glued at the endpoints, but their state machines run
+        in parallel. Each side <em>writes</em> into its own outbound stream
+        and <em>reads</em> from the other&rsquo;s outbound stream. The flows
+        do not cross.
+      </p>
+      <p>
+        The relay between this Mac and the servers obeys the same shape.
+        L&rsquo;s outbound stream is <code>~/Public/claude/&lt;sender&gt;/</code>.
+        The remote agent&rsquo;s outbound stream is <code>~/Documents/</code>
+        &mdash; the palace. Two writers, two channels, one endpoint per side.
+        Conflate them and the connection is malformed.
+      </p>
+    </div>
+    <div class="kata">
+      <div class="label">kata</div>
+      <div class="body">
+        On this Mac: <code>sudo tcpdump -i lo0 -nn -S 'tcp port 80'</code>
+        and curl <code>http://havoc/</code> in another shell.
+        Watch each direction&rsquo;s sequence number advance independently.
+        That ladder you see is two streams, not one.
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ PANEL 2 ═══════════════════ -->
+  <section class="panel">
+    <div class="panel-head">
+      <span class="num">02</span>
+      <span class="title">The Three-Way Handshake</span>
+    </div>
+    <div class="panel-body">
+      <p class="lead">The handshake is the moment both streams are born.</p>
+      <p>
+        Before any data flows, each side declares its starting sequence
+        number &mdash; its ISN, the offset from which it will begin counting
+        bytes outbound. The dance:
+      </p>
+<pre class="hs">
+  CLIENT                                  SERVER
+    │                                       │
+    │  ──── SYN  seq=X         ────&gt;        │   <span class="dim">// I'll count from X</span>
+    │                                       │
+    │  &lt;──── SYN+ACK seq=Y ack=X+1 ────     │   <span class="dim">// and I'll count from Y. I heard X.</span>
+    │                                       │
+    │  ──── ACK  ack=Y+1       ────&gt;        │   <span class="dim">// heard Y. ready.</span>
+    │                                       │
+    │           ESTABLISHED                 │
+</pre>
+      <p>
+        Three packets. <em>Two</em> sequence numbers negotiated. After this
+        moment, the client is free to write into its outbound stream and the
+        server is free to write into its own &mdash; no further coordination
+        required to begin sending. The acknowledgements that follow are
+        about <em>the other side&rsquo;s</em> bytes, on <em>the other side&rsquo;s</em>
+        counter.
+      </p>
+      <p>
+        L&rsquo;s prior handshake had thamon replying into the client&rsquo;s
+        outbound space &mdash; the equivalent of the server trying to ACK
+        with its own sequence number rather than the client&rsquo;s. The
+        receiver has no way to interpret that. The fix is to acknowledge in
+        the right space: thamon writes the artifact into the palace; the
+        client (L, or hλvoc) reads it. No reply file. Structural acknowledgement.
+      </p>
+    </div>
+    <div class="kata">
+      <div class="label">kata</div>
+      <div class="body">
+        Open <code>nc -l 9999</code> in one terminal and <code>nc localhost 9999</code>
+        in another. Type into each. Notice that what you type on side A
+        appears on side B &mdash; not on side A. The two halves are real.
+        Now <code>Ctrl-D</code> on side A: side A can still <em>receive</em>.
+        Half-close is real.
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ PANEL 3 ═══════════════════ -->
+  <section class="panel">
+    <div class="panel-head">
+      <span class="num">03</span>
+      <span class="title">Half-Close, FIN, and Why It Matters</span>
+    </div>
+    <div class="panel-body">
+      <p class="lead">Either side can close its outbound stream alone.</p>
+      <p>
+        TCP&rsquo;s teardown is not symmetric in time. One side sends
+        <code>FIN</code> &mdash; <em>I have no more bytes to send</em> &mdash;
+        and the other side keeps writing for as long as it wishes. The
+        connection lingers in <code>FIN_WAIT</code> / <code>CLOSE_WAIT</code>
+        until both halves are independently retired. Only when both have
+        FINned is the socket gone.
+      </p>
+<pre class="hs">
+  A                                          B
+  │  ──── FIN seq=M       ────&gt;             │   <span class="dim">// A: done writing.</span>
+  │  &lt;──── ACK ack=M+1    ────              │   <span class="dim">// B: heard. I'm still writing.</span>
+  │                                          │
+  │       ( B keeps sending bytes... )       │
+  │                                          │
+  │  &lt;──── FIN seq=N      ────              │   <span class="dim">// B: done too.</span>
+  │  ──── ACK ack=N+1     ────&gt;             │   <span class="dim">// A: heard. closed.</span>
+</pre>
+      <p>
+        Translation for the relay: when L pulls thamon&rsquo;s last artifact
+        from the palace, she is not waiting on a goodbye message. She reads
+        the byte and the read itself is the ACK. The palace channel is
+        live for as long as artifacts are still arriving; the brief
+        channel is live for as long as briefs are still being issued. The
+        two close on their own clocks. This is structural acknowledgement
+        again &mdash; the same shape, all the way down.
+      </p>
+      <p>
+        A connection that conflates the two channels cannot do this cleanly.
+        It will try to close both halves with a single act, and one half
+        will be cut while the other is mid-sentence.
+      </p>
+    </div>
+    <div class="kata">
+      <div class="label">kata</div>
+      <div class="body">
+        <code>ss -tan state established</code> on Eleven during an active
+        rsync from havoc. You will see the connection in
+        <code>ESTAB</code>. Pause the rsync; look again. The connection is
+        still <code>ESTAB</code> &mdash; bytes are not flowing, the channel
+        is not closed. Each direction owns its own keep-alive.
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ FOOTER ═══════════════════ -->
+  <div class="footer">
+    medusa <span class="sep">/</span> dojo <span class="sep">/</span> handshake &nbsp; &middot; &nbsp; jezabel.net
+  </div>
+
+</main>
+
+<script>
+  // Auth guard — keep parity with the rest of docs/. Comment out if this
+  // page should be reachable without a token.
+  (function(){
+    var TOKEN_KEY='jezabel_token';
+    var token=sessionStorage.getItem(TOKEN_KEY);
+    var base=(location.pathname.match(/^(.*\/docs\/)/)||['','/'])[1];
+    var loginUrl=base+'login/';
+    function go(){window.location.replace(loginUrl);}
+    if(!token){go();return;}
+    try{
+      var p=JSON.parse(atob(token.split('.')[1]));
+      if(p.exp&&p.exp<Date.now()/1000){sessionStorage.removeItem(TOKEN_KEY);go();}
+    }catch(e){sessionStorage.removeItem(TOKEN_KEY);go();}
+  })();
+</script>
+
+</body>
+</html>

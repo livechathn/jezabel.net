@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>jezabel.net - symlink codex / telegram install</title>
+<link rel="icon" type="image/svg+xml" href="../../../assets/favicon.svg">
     <style>
         * {
             margin: 0;
@@ -862,8 +863,7 @@
             sCtx.beginPath();
             sCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
             sCtx.fillStyle = this.color + Math.floor(this.brightness * 255).toString(16).padStart(2, '0');
-            sCtx.shadowBlur = 8; sCtx.shadowColor = this.color;
-            sCtx.fill(); sCtx.shadowBlur = 0;
+            sCtx.fill();
         }
     }
 

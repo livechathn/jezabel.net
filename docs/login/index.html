@@ -7,6 +7,9 @@
 <title>jezabel.net — ssh</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400&display=swap">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/apple-touch-icon.png">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{
@@ -80,7 +83,7 @@ input[type=text],input[type=password]{
   font-family:'JetBrains Mono',monospace;
   font-size:13px;
   padding:6px 4px;
-  outline:none;
+  
   letter-spacing:1px;
   caret-color:#00ff41;
 }
@@ -130,15 +133,17 @@ input:focus{border-bottom-color:#00ff41;}
       <div class="warn">Warning: This system is for authorized users only.</div>
       <div>All access is monitored and logged.</div>
     </div>
+    <form id="login-form" onsubmit="doLogin(); return false;">
     <div class="field">
-      <span class="field-label">login:</span>
-      <input type="text" id="u" autocomplete="username" autofocus placeholder="_">
+      <label class="field-label" for="u">login:</label>
+      <input type="text" id="u" name="username" autocomplete="off" autofocus placeholder="_">
     </div>
     <div class="field">
-      <span class="field-label">password:</span>
-      <input type="password" id="p" autocomplete="current-password" placeholder="_">
+      <label class="field-label" for="p">password:</label>
+      <input type="password" id="p" name="password" autocomplete="off" placeholder="_">
     </div>
-    <button class="btn" id="btn" onclick="doLogin()">[ authenticate ]</button>
+    <button type="submit" class="btn" id="btn">[ authenticate ]</button>
+    </form>
     <div class="status dim" id="status">&nbsp;</div>
     <a href="../" class="back">← back to jezabel.net</a>
   </div>
