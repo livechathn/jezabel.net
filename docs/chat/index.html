@@ -127,18 +127,28 @@ const SAR1A = 'https://sar1a.lempyra.com';
 const TOKEN_KEY = 'jezabel_token', REFRESH_KEY = 'jezabel_refresh';
 // HARDCODED model allowlist — NOT fetched from sar1a (no live refresh).
 // jezabel.net = the hacker's den / coding codex → bigger lineup:
-// 35b abliterated · 122b variants (coding-capable uncensored) · gemini.
-// NOTE: no model is literally tagged "coder"; the qwen heavies are the
-// strongest uncensored coders available. gemini is paid but wanted HERE.
+// 35b abliterated · 122b variants (coding-capable uncensored).
+// NOTE: gemini (paid) DISABLED 2026-06-15 per L's no-paid directive — the orch
+// no longer serves cloud models. To restore: uncomment the two lines below AND
+// re-enable gemini at the orch. Default is now the local heretic (MODELS[0]).
 const MODELS = [
-  ['gemini-2.5-flash',    'gemini · flash (fast)'],   // default · fast + streams
-  ['gemini-2.5-pro',      'gemini · pro'],
-  ['qwen3.6-35b-heretic', 'qwen · 35b heretic (abliterated)'],
+  // ['gemini-2.5-flash',    'gemini · flash (fast)'],   // DISABLED 2026-06-15 no-paid — re-enable to restore
+  // ['gemini-2.5-pro',      'gemini · pro'],            // DISABLED 2026-06-15 no-paid — re-enable to restore
+  ['qwen3.6-35b-heretic', 'qwen · 35b heretic (abliterated)'],   // default (local)
   ['qwen3.5-122b-fast',   'qwen · 122b fast'],
   ['qwen3.5-122b',        'qwen · 122b'],
 ];
 const MODEL_KEY = 'jezabel_model';
-function currentModel(){ return (document.getElementById('model')||{}).value || sessionStorage.getItem(MODEL_KEY) || MODELS[0][0]; }
+const MODEL_IDS = MODELS.map(m => m[0]);
+// Validate against the live allowlist so a stale gemini selection (sessionStorage
+// from before the no-paid cutoff) falls back to the local heretic default.
+function currentModel(){
+  const sel = (document.getElementById('model')||{}).value;
+  if (sel && MODEL_IDS.includes(sel)) return sel;
+  const stored = sessionStorage.getItem(MODEL_KEY);
+  if (stored && MODEL_IDS.includes(stored)) return stored;
+  return MODELS[0][0];
+}
 const IMG_SFW = 'Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors';
 const IMG_NSFW = 'cyberrealisticPony_v110-001.safetensors';   // tagged nsfw — /degen only
 const SYSTEM = "You are JEZABEL — a serpent-like intelligence, a hacker's sparring partner from a dimension adjacent to this one. "
