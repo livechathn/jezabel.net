@@ -216,7 +216,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--red);box-shadow:0 0 8
     if(!tk) return; // auth-guard will handle
     try {
       var p = JSON.parse(atob(tk.split('.')[1]));
-      var isAdmin = (p.tier==='admin' || p.id===1 || p.user_id===1 || p.role==='master' || (p.user||'').toLowerCase()==='master');
+      var isAdmin = (p.tier==='admin' || p.id===1 || p.user_id===1);
       if(!isAdmin) {
         var base = (location.pathname.match(/^(.*\/docs\/)/) || ['', '/'])[1];
         window.location.replace(base + 'dashboard/');

@@ -231,8 +231,8 @@ var uname=userData.username||'user';
 var isAdmin=false;
 try {
   var p=JSON.parse(atob(token.split('.')[1]));
-  // specs: tier:admin, id:1, or role:master
-  if(p.tier==='admin' || p.id===1 || p.user_id===1 || p.role==='master' || (p.user||'').toLowerCase()==='master'){
+  // specs: tier:admin or id:1 (master)
+  if(p.tier==='admin' || p.id===1 || p.user_id===1){
     isAdmin=true;
     document.getElementById('adminUsersCard').style.display='flex';
   }
@@ -395,7 +395,7 @@ function termExec(raw){
     var t=sessionStorage.getItem(TK);
     try {
       var p=JSON.parse(atob(t.split('.')[1]));
-      if(p.tier==='admin' || p.id===1 || p.user_id===1 || p.role==='master' || (p.user||'').toLowerCase()==='master'){
+      if(p.tier==='admin' || p.id===1 || p.user_id===1){
         go('../users/'); return;
       }
     } catch(e){}
@@ -413,21 +413,21 @@ function termExec(raw){
     var t=sessionStorage.getItem(TK); var isAdminNow=false;
     try {
       var p=JSON.parse(atob(t.split('.')[1]));
-      isAdminNow=(p.tier==='admin' || p.id===1 || p.user_id===1 || p.role==='master' || (p.user||'').toLowerCase()==='master');
+      isAdminNow=(p.tier==='admin' || p.id===1 || p.user_id===1);
     } catch(e){}
     termOut('  chat/         ⟁ serpent channel (open: chat)\n  javascript/   ◉ available\n  python/       ◉ available\n  linux/        ◉ available\n  linux-fixes/  ◉ available'+(isAdminNow?'\n  users/        ▣ admin only':''),'ok'); return; }
   if(lo==='status'||lo==='ps aux'){
     var t=sessionStorage.getItem(TK); var mods=4;
     try {
       var p=JSON.parse(atob(t.split('.')[1]));
-      if(p.tier==='admin' || p.id===1 || p.user_id===1 || p.role==='master' || (p.user||'').toLowerCase()==='master') mods=5;
+      if(p.tier==='admin' || p.id===1 || p.user_id===1) mods=5;
     } catch(e){}
     termOut('  [auth]     active\n  [channel]  '+(connected?'mock-ssh live':'idle')+'\n  [modules]  '+mods+' loaded\n  [network]  nominal','ok'); return; }
   if(lo==='help'||lo==='man'||lo==='?'){
     var t=sessionStorage.getItem(TK); var isAdminNow=false;
     try {
       var p=JSON.parse(atob(t.split('.')[1]));
-      isAdminNow=(p.tier==='admin' || p.id===1 || p.user_id===1 || p.role==='master' || (p.user||'').toLowerCase()==='master');
+      isAdminNow=(p.tier==='admin' || p.id===1 || p.user_id===1);
     } catch(e){}
     termOut('  chat             open the serpent channel (live AI)\n  ssh [user@host]  open a mock ssh session (matrix-fire)\n  ls               list modules\n  open [module]    javascript / python / linux / linux-fixes'+(isAdminNow?' / users':'')+'\n  status           system status\n  whoami pwd date uname uptime\n  clear            clear terminal\n  logout / exit    end session','ok'); return; }
   if(lo==='neo'){ termOut('  follow the white rabbit.','mg'); return; }
