@@ -189,6 +189,15 @@ body::after{content:'';position:fixed;inset:0;
       </div>
       <div class="mod-footer"><a href="../strudel/" class="mod-btn">⌬ open strudel/</a></div>
     </div>
+    <div class="mod-card users" id="adminUsersCard" style="display:none">
+      <div class="mod-header"><span class="dot"></span><span>users/</span><span class="mod-lang">ADMIN · DB</span></div>
+      <div class="mod-body">
+        <div class="mod-item">user roster — search & filter</div>
+        <div class="mod-item">Facebook-style user sheets</div>
+        <div class="mod-item">tier & metadata management</div>
+      </div>
+      <div class="mod-footer"><a href="../users/" class="mod-btn">▣ open users/</a></div>
+    </div>
   </div>
 
   <!-- TERMINAL -->
@@ -219,6 +228,14 @@ var token=sessionStorage.getItem(TK);
 if(!token){ var b=(location.pathname.match(/^(.*\/docs\/)/)||['','/'])[1]; window.location.replace(b+'login/'); }
 var userData={}; try{ userData=JSON.parse(sessionStorage.getItem(UK)||'{}'); }catch(e){}
 var uname=userData.username||'user';
+var isAdmin=false;
+try {
+  var p=JSON.parse(atob(token.split('.')[1]));
+  if(p.tier==='admin'){
+    isAdmin=true;
+    document.getElementById('adminUsersCard').style.display='flex';
+  }
+} catch(e){}
 document.getElementById('sb-user').textContent=uname;
 document.getElementById('term-ps').textContent=uname+'@jezabel:~/codex$';
 
@@ -373,6 +390,14 @@ function termExec(raw){
   if(lo==='open python'||lo==='open py'){ go('../app/python/cli-apps-parsing/'); return; }
   if(lo==='open linux'||lo==='open linuxmagick'){ go('../app/linuxMagick/'); return; }
   if(lo==='open linux-fixes'||lo==='open fixes'){ go('../app/linuxFixes/raspberrypi/swap/'); return; }
+  if(lo==='open users'||lo==='users'){
+    var t=sessionStorage.getItem(TK);
+    try {
+      var p=JSON.parse(atob(t.split('.')[1]));
+      if(p.tier==='admin'){ go('../users/'); return; }
+    } catch(e){}
+    termOut('  permission denied: admin only','err'); return;
+  }
 
   if(lo==='clear'){ clearTerm(); return; }
   if(lo==='logout'||lo==='exit'){ doLogout(); return; }
@@ -382,11 +407,17 @@ function termExec(raw){
   if(lo==='uname'||lo==='uname -a'){ termOut('  jezabel OS v2.7.1 #1 SMP x86_64 GNU/Linux','ok'); return; }
   if(lo==='uptime'){ termOut('  up 99 days, 23:59,  1 user,  load: 0.01 0.01 0.00','ok'); return; }
   if(lo==='ls'||lo==='ls -la'||lo==='dir'){
-    termOut('  chat/         ⟁ serpent channel (open: chat)\n  javascript/   ◉ available\n  python/       ◉ available\n  linux/        ◉ available\n  linux-fixes/  ◉ available','ok'); return; }
+    var t=sessionStorage.getItem(TK); var isAdmin=false;
+    try { var p=JSON.parse(atob(t.split('.')[1])); isAdmin=(p.tier==='admin'); } catch(e){}
+    termOut('  chat/         ⟁ serpent channel (open: chat)\n  javascript/   ◉ available\n  python/       ◉ available\n  linux/        ◉ available\n  linux-fixes/  ◉ available'+(isAdmin?'\n  users/        ▣ admin only':''),'ok'); return; }
   if(lo==='status'||lo==='ps aux'){
-    termOut('  [auth]     active\n  [channel]  '+(connected?'mock-ssh live':'idle')+'\n  [modules]  4 loaded\n  [network]  nominal','ok'); return; }
+    var t=sessionStorage.getItem(TK); var mods=4;
+    try { var p=JSON.parse(atob(t.split('.')[1])); if(p.tier==='admin') mods=5; } catch(e){}
+    termOut('  [auth]     active\n  [channel]  '+(connected?'mock-ssh live':'idle')+'\n  [modules]  '+mods+' loaded\n  [network]  nominal','ok'); return; }
   if(lo==='help'||lo==='man'||lo==='?'){
-    termOut('  chat             open the serpent channel (live AI)\n  ssh [user@host]  open a mock ssh session (matrix-fire)\n  ls               list modules\n  open [module]    javascript / python / linux / linux-fixes\n  status           system status\n  whoami pwd date uname uptime\n  clear            clear terminal\n  logout / exit    end session','ok'); return; }
+    var t=sessionStorage.getItem(TK); var isAdmin=false;
+    try { var p=JSON.parse(atob(t.split('.')[1])); isAdmin=(p.tier==='admin'); } catch(e){}
+    termOut('  chat             open the serpent channel (live AI)\n  ssh [user@host]  open a mock ssh session (matrix-fire)\n  ls               list modules\n  open [module]    javascript / python / linux / linux-fixes'+(isAdmin?' / users':'')+'\n  status           system status\n  whoami pwd date uname uptime\n  clear            clear terminal\n  logout / exit    end session','ok'); return; }
   if(lo==='neo'){ termOut('  follow the white rabbit.','mg'); return; }
   if(lo==='matrix'){ termOut('  there is no spoon.','mg'); return; }
   if(lo==='hack'){ termOut('  read the source. that is the hack.','mg'); return; }
@@ -410,7 +441,7 @@ document.addEventListener('click',function(e){ if(!e.target.closest('a')&&!e.tar
     ['  jezabel OS v2.7.1 — codex loaded','dim'],
     ['  auth: token verified','dim'],
     ['  ⟁ serpent channel: standing by','mg'],
-    ['  modules: 4 available · phosphor terminal hot','dim'],
+    ['  modules: '+(isAdmin?'5':'4')+' available · phosphor terminal hot','dim'],
     ["  type 'chat' to open the channel · 'ssh' for a session · 'help' for more",'dim']
   ];
   msgs.forEach(function(m,i){ setTimeout(function(){ termOut(m[0],m[1]); },i*140); });

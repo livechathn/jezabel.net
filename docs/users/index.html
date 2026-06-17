@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>jezabel.net · USERS</title>
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --black:#0a0c0e; --void:#06080a; --surface:#11161c; --raised:#1a2028; --line:#243040;
+  --red:#ff2929; --red-dim:#a00010; --red-deep:#550000;
+  --cyan:#3df0ff; --cyan-dim:#1ba8b8; --blue:#0099ff;
+  --magenta:#ff2bd6; --magenta-dim:#aa1e92; --danger:#ff5566; --ok:#3df0a8;
+  --text:#e8f0f8; --muted:#5a6a7a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:'Rajdhani',sans-serif;background-color:var(--black);color:var(--text);
+  font-size:15px;line-height:1.4;overflow:hidden;letter-spacing:0.3px;
+  background: radial-gradient(circle at center, #1a0a1a 0%, #050008 100%);
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:200;
+  background:repeating-linear-gradient(0deg,transparent 0,transparent 3px,rgba(255,41,41,0.015) 3px,rgba(255,41,41,0.015) 4px);
+}
+button{font-family:'Rajdhani',sans-serif;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font-family:'Rajdhani',sans-serif;background:var(--void);color:var(--text);border:1px solid var(--line);padding:8px;outline:none;}
+input:focus,textarea:focus,select:focus{border-color:var(--red);box-shadow:0 0 8px rgba(255,41,41,0.3)}
+
+/* CP77 angled clip-paths */
+.notch-tl{clip-path:polygon(16px 0,100% 0,100% 100%,0 100%,0 16px)}
+.notch-br{clip-path:polygon(0 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%)}
+.notch-both{clip-path:polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px)}
+
+/* TOP BAR */
+.topbar{
+  display:flex;align-items:center;gap:24px;padding:16px 28px;
+  background:var(--void);border-bottom:2px solid var(--red);height:72px;position:relative;z-index:10;
+}
+.brand{
+  font-family:'Orbitron',sans-serif;font-weight:900;font-size:22px;letter-spacing:4px;
+  color:var(--red);text-shadow:0 0 14px rgba(255,41,41,0.6),0 0 28px rgba(255,41,41,0.3);
+  text-decoration:none;
+}
+.brand .dot{color:var(--magenta)}
+.bar-spacer{flex:1}
+.back-link{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;color:var(--muted);text-decoration:none;text-transform:uppercase;}
+.back-link:hover{color:var(--text)}
+
+/* MAIN */
+.main{height:calc(100vh - 72px);overflow-y:auto;padding:32px;position:relative;z-index:10;}
+.view{max-width:1280px;margin:0 auto}
+
+/* ROSTER VIEW */
+.roster-controls{display:flex;gap:16px;margin-bottom:24px;align-items:center;background:var(--surface);padding:16px;border:1px solid var(--line);}
+.search-input{flex:1;background:var(--void);border:1px solid var(--line);color:var(--text);padding:10px 16px;font-family:'Rajdhani',sans-serif;font-size:16px;letter-spacing:1px;}
+.filter-group{display:flex;gap:8px;}
+.chip{padding:6px 12px;background:var(--void);border:1px solid var(--line);color:var(--muted);font-size:12px;letter-spacing:1px;text-transform:uppercase;transition:all 0.15s;}
+.chip:hover{border-color:var(--cyan);color:var(--cyan)}
+.chip.active{background:var(--red-deep);border-color:var(--red);color:var(--red);text-shadow:0 0 8px var(--red)}
+
+.roster-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px}
+.card{
+  background:var(--surface);border:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:12px;
+  cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;
+}
+.card:hover{border-color:var(--red);transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+.card-vignette{position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,41,41,0.05),transparent);pointer-events:none;}
+.card-header{display:flex;justify-content:space-between;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.card-name{font-family:'Orbitron',sans-serif;font-weight:800;font-size:18px;letter-spacing:2px;color:var(--red);text-shadow:0 0 8px rgba(255,41,41,0.4)}
+.card-meta{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px;}
+.card-meta span{color:var(--cyan)}
+.tier-badge{padding:2px 6px;font-size:9px;font-weight:900;background:var(--void);border:1px solid var(--muted);color:var(--muted);clip-path:polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px);}
+.tier-premium{border-color:var(--red);color:var(--red);background:rgba(255,41,41,0.1)}
+.tier-admin{border-color:var(--cyan);color:var(--cyan);background:rgba(61,240,255,0.1)}
+
+/* USER SHEET */
+.sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);z-index:100;display:none;padding:40px;overflow-y:auto;}
+.sheet-container{max-width:1000px;margin:0 auto;background:var(--black);border:1px solid var(--red);display:grid;grid-template-columns:320px 1fr;min-height:600px;position:relative;}
+.sheet-sidebar{background:var(--surface);padding:32px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:24px;}
+.sheet-main{padding:40px;display:flex;flex-direction:column;gap:32px;}
+
+.user-portrait{
+  width:100%;aspect-ratio:1/1;background:var(--void);border:1px solid var(--cyan-dim);
+  display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;
+  font-weight:900;font-size:80px;color:var(--red);text-shadow:0 0 20px rgba(255,41,41,0.5);
+}
+.sheet-actions{display:flex;flex-direction:column;gap:12px;margin-top:auto;}
+.sheet-btn{
+  padding:14px;border:1px solid var(--line);color:var(--text);font-family:'Orbitron',sans-serif;font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;text-align:center;transition:all 0.15s;
+}
+.sheet-btn:hover{background:var(--red);border-color:var(--red);color:var(--black)}
+.sheet-btn.red{border-color:var(--red);color:var(--red)}
+.sheet-btn.red:hover{background:var(--red);color:var(--black)}
+
+.field-group{display:flex;flex-direction:column;gap:8px;}
+.label{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;}
+.val{font-size:18px;color:var(--text);border-bottom:1px solid transparent;padding:4px 0;}
+.editing .val{display:none;}
+.rw-input{display:none;width:100%;}
+.editing .rw-input{display:block;}
+
+.grid-fields{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.notes-area{min-height:120px;resize:vertical;}
+
+.close-btn{position:absolute;top:-20px;right:-20px;width:40px;height:40px;background:var(--red);color:var(--black);display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;z-index:110;}
+
+.toast{position:fixed;bottom:32px;right:32px;padding:16px 24px;background:var(--void);border:1px solid var(--ok);color:var(--ok);font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:2px;z-index:200;display:none;box-shadow:0 0 20px rgba(61,240,168,0.2)}
+.toast.err{border-color:var(--red);color:var(--red)}
+.toast.warn{border-color:var(--magenta);color:var(--magenta)}
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="../dashboard/" class="brand">JEZABEL<span class="dot">.</span>NET</a>
+  <div class="bar-spacer"></div>
+  <div class="user-block">
+    <a href="../dashboard/" class="back-link">← back to codex</a>
+  </div>
+</div>
+
+<div class="main">
+  <div class="view">
+    <div class="roster-controls notch-tl">
+      <input type="text" id="searchInput" class="search-input" placeholder="SEARCH USERS · PLATFORM · ID · NAME…" oninput="renderRoster()">
+      <div class="filter-group" id="platformFilters">
+        <!-- populated by JS -->
+      </div>
+      <div class="filter-group" id="tierFilters">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+    <div class="roster-grid" id="rosterGrid">
+      <!-- populated by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- USER SHEET OVERLAY -->
+<div class="sheet-overlay" id="sheetOverlay" onclick="if(event.target===this)closeSheet()">
+  <div class="sheet-container notch-both" id="sheetContainer" onclick="event.stopPropagation()">
+    <div class="close-btn" onclick="closeSheet()">×</div>
+    <div class="sheet-sidebar">
+      <div class="user-portrait" id="sheetPortrait">?</div>
+      <div class="field-group">
+        <span class="label">PLATFORM</span>
+        <span class="val" id="sheetPlatform">—</span>
+      </div>
+      <div class="field-group">
+        <span class="label">EXTERNAL ID</span>
+        <span class="val" id="sheetExtId">—</span>
+      </div>
+      <div class="sheet-actions">
+        <button class="sheet-btn" id="editBtn" onclick="toggleEdit()">▸ EDIT USER</button>
+        <button class="sheet-btn red" id="saveBtn" style="display:none" onclick="saveUser()">▸ SAVE CHANGES</button>
+        <button class="sheet-btn" id="cancelBtn" style="display:none" onclick="toggleEdit(false)">× CANCEL</button>
+      </div>
+    </div>
+    <div class="sheet-main">
+      <div class="field-group">
+        <span class="label">DISPLAY NAME</span>
+        <span class="val" id="sheetDisplayName">—</span>
+        <input type="text" id="editDisplayName" class="rw-input">
+      </div>
+      <div class="grid-fields">
+        <div class="field-group">
+          <span class="label">USERNAME</span>
+          <span class="val" id="sheetUsername">—</span>
+        </div>
+        <div class="field-group">
+          <span class="label">TIER</span>
+          <span class="val" id="sheetTier">—</span>
+          <select id="editTier" class="rw-input">
+            <option value="free">FREE</option>
+            <option value="premium">PREMIUM</option>
+            <option value="admin">ADMIN</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-fields">
+        <div class="field-group">
+          <span class="label">MSG COUNT</span>
+          <span class="val" id="sheetMsgCount">—</span>
+        </div>
+        <div class="field-group">
+          <span class="label">LAST PERSONA</span>
+          <span class="val" id="sheetLastPersona">—</span>
+        </div>
+      </div>
+      <div class="field-group">
+        <span class="label">NOTES</span>
+        <div class="val" id="sheetNotes" style="white-space:pre-wrap">—</div>
+        <textarea id="editNotes" class="rw-input notes-area"></textarea>
+      </div>
+      <div class="field-group" style="opacity:0.5">
+        <span class="label">USER KEY</span>
+        <span class="val" id="sheetUserKey" style="font-size:12px">—</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="../auth-guard.js"></script>
+<script>
+  // Extra tier check for users page
+  (function(){
+    var tk = sessionStorage.getItem('jezabel_token');
+    if(!tk) return; // auth-guard will handle
+    try {
+      var p = JSON.parse(atob(tk.split('.')[1]));
+      if(p.tier !== 'admin') {
+        var base = (location.pathname.match(/^(.*\/docs\/)/) || ['', '/'])[1];
+        window.location.replace(base + 'dashboard/');
+      }
+    } catch(e) {}
+  })();
+</script>
+<script src="mock-data.js"></script>
+<script>
+  var currentUsers = [...MOCK_USERS];
+  var filters = { platform: '', tier: '' };
+  var selectedUser = null;
+  var isEditing = false;
+
+  function init() {
+    renderFilters();
+    renderRoster();
+  }
+
+  function renderFilters() {
+    var plats = ['', 'telegram', 'whatsapp', 'web'];
+    var platLabels = { '': 'ALL', 'telegram': 'TG', 'whatsapp': 'WA', 'web': 'WEB' };
+    document.getElementById('platformFilters').innerHTML = plats.map(p => 
+      `<button class="chip ${filters.platform === p ? 'active' : ''}" onclick="setFilter('platform', '${p}')">${platLabels[p]}</button>`
+    ).join('');
+
+    var tiers = ['', 'free', 'premium', 'admin'];
+    document.getElementById('tierFilters').innerHTML = tiers.map(t => 
+      `<button class="chip ${filters.tier === t ? 'active' : ''}" onclick="setFilter('tier', '${t}')">${t || 'ALL'}</button>`
+    ).join('');
+  }
+
+  function setFilter(key, val) {
+    filters[key] = val;
+    renderFilters();
+    renderRoster();
+  }
+
+  function renderRoster() {
+    var q = document.getElementById('searchInput').value.toLowerCase();
+    var grid = document.getElementById('rosterGrid');
+    
+    var filtered = currentUsers.filter(u => {
+      if (filters.platform && u.platform !== filters.platform) return false;
+      if (filters.tier && u.tier !== filters.tier) return false;
+      if (q) {
+        var hay = (u.username + ' ' + u.display_name + ' ' + u.ext_id).toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+
+    grid.innerHTML = filtered.map(u => `
+      <div class="card notch-br" onclick="openSheet('${u.platform}', '${u.ext_id}')">
+        <div class="card-vignette"></div>
+        <div class="card-header">
+          <span>${u.platform.toUpperCase()}</span>
+          <span class="tier-badge tier-${u.tier}">${u.tier.toUpperCase()}</span>
+        </div>
+        <div class="card-name">${u.display_name || u.username}</div>
+        <div class="card-meta">
+          <div>ID: <span>${u.ext_id}</span></div>
+          <div>MSGS: <span>${u.msg_count}</span></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function openSheet(platform, extId) {
+    selectedUser = currentUsers.find(u => u.platform === platform && u.ext_id === extId);
+    if (!selectedUser) return;
+
+    document.getElementById('sheetPortrait').textContent = (selectedUser.display_name || selectedUser.username || '?').charAt(0).toUpperCase();
+    document.getElementById('sheetPlatform').textContent = selectedUser.platform.toUpperCase();
+    document.getElementById('sheetExtId').textContent = selectedUser.ext_id;
+    document.getElementById('sheetDisplayName').textContent = selectedUser.display_name || '—';
+    document.getElementById('sheetUsername').textContent = selectedUser.username || '—';
+    document.getElementById('sheetTier').textContent = selectedUser.tier.toUpperCase();
+    document.getElementById('sheetMsgCount').textContent = selectedUser.msg_count;
+    document.getElementById('sheetLastPersona').textContent = selectedUser.last_persona_id || '—';
+    document.getElementById('sheetNotes').textContent = selectedUser.notes || '—';
+    document.getElementById('sheetUserKey').textContent = selectedUser.user_key || '—';
+
+    // Set edit inputs
+    document.getElementById('editDisplayName').value = selectedUser.display_name || '';
+    document.getElementById('editTier').value = selectedUser.tier;
+    document.getElementById('editNotes').value = selectedUser.notes || '';
+
+    document.getElementById('sheetOverlay').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSheet() {
+    if (isEditing) {
+      if (!confirm('Discard unsaved changes?')) return;
+      toggleEdit(false);
+    }
+    document.getElementById('sheetOverlay').style.display = 'none';
+    document.body.style.overflow = 'auto';
+  }
+
+  function toggleEdit(on) {
+    isEditing = (on !== undefined) ? on : !isEditing;
+    var container = document.getElementById('sheetContainer');
+    if (isEditing) container.classList.add('editing');
+    else container.classList.remove('editing');
+
+    document.getElementById('editBtn').style.display = isEditing ? 'none' : 'block';
+    document.getElementById('saveBtn').style.display = isEditing ? 'block' : 'none';
+    document.getElementById('cancelBtn').style.display = isEditing ? 'block' : 'none';
+  }
+
+  function saveUser() {
+    if (!selectedUser) return;
+    
+    // Simulate API call
+    showToast('SAVING USER...', 'warn');
+    
+    setTimeout(() => {
+      selectedUser.display_name = document.getElementById('editDisplayName').value;
+      selectedUser.tier = document.getElementById('editTier').value;
+      selectedUser.notes = document.getElementById('editNotes').value;
+
+      // In a real app, we'd fire _attemptWrite here
+      // For now, just update local state
+      showToast('USER SAVED (MOCK)', 'ok');
+      toggleEdit(false);
+      openSheet(selectedUser.platform, selectedUser.ext_id); // Refresh view
+      renderRoster(); // Refresh grid
+    }, 800);
+  }
+
+  function showToast(msg, type) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + (type || '');
+    t.style.display = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 3000);
+  }
+
+  init();
+</script>
+</body>
+</html>

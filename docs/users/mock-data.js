@@ -1,0 +1,58 @@
+var MOCK_USERS = [
+  {
+    platform: 'telegram',
+    ext_id: '12345678',
+    user_key: 'uk_abc123',
+    username: 'johndoe',
+    display_name: 'John Doe',
+    tier: 'premium',
+    first_seen: '2024-01-01T12:00:00Z',
+    last_seen: '2024-06-15T10:30:00Z',
+    msg_count: 1542,
+    last_persona_id: '99',
+    notes: 'Likes sci-fi stories.',
+    flags: { is_beta: true }
+  },
+  {
+    platform: 'whatsapp',
+    ext_id: '987654321',
+    user_key: 'uk_xyz789',
+    username: 'janedoe',
+    display_name: 'Jane Doe',
+    tier: 'free',
+    first_seen: '2024-02-10T08:15:00Z',
+    last_seen: '2024-06-16T22:10:00Z',
+    msg_count: 85,
+    last_persona_id: '102',
+    notes: 'Occasional user.',
+    flags: {}
+  },
+  {
+    platform: 'web',
+    ext_id: 'web_999',
+    user_key: 'uk_web999',
+    username: 'admin_tester',
+    display_name: 'Admin Tester',
+    tier: 'admin',
+    first_seen: '2023-12-20T00:00:00Z',
+    last_seen: '2024-06-17T11:45:00Z',
+    msg_count: 5003,
+    last_persona_id: '99',
+    notes: 'Internal testing account.',
+    flags: { internal: true }
+  },
+  {
+    platform: 'telegram',
+    ext_id: '555444333',
+    user_key: null,
+    username: 'mystery_user',
+    display_name: 'Mystery User',
+    tier: 'free',
+    first_seen: '2024-05-01T14:20:00Z',
+    last_seen: '2024-05-01T14:25:00Z',
+    msg_count: 2,
+    last_persona_id: '105',
+    notes: 'Dropped after 2 messages.',
+    flags: {}
+  }
+];
