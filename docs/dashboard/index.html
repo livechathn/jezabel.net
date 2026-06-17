@@ -231,8 +231,9 @@ var uname=userData.username||'user';
 var isAdmin=false;
 try {
   var p=JSON.parse(atob(token.split('.')[1]));
-  // specs: tier:admin or id:1 (master)
-  if(p.tier==='admin' || p.id===1 || p.user_id===1){
+  var u=userData;
+  // specs: check token (p) and user object (u)
+  if(p.tier==='admin' || p.id===1 || p.user_id===1 || u.tier==='admin' || u.id===1 || u.user_id===1){
     isAdmin=true;
     document.getElementById('adminUsersCard').style.display='flex';
   }
@@ -393,9 +394,10 @@ function termExec(raw){
   if(lo==='open linux-fixes'||lo==='open fixes'){ go('../app/linuxFixes/raspberrypi/swap/'); return; }
   if(lo==='open users'||lo==='users'){
     var t=sessionStorage.getItem(TK);
+    var u=JSON.parse(sessionStorage.getItem(UK)||'{}');
     try {
       var p=JSON.parse(atob(t.split('.')[1]));
-      if(p.tier==='admin' || p.id===1 || p.user_id===1){
+      if(p.tier==='admin' || p.id===1 || p.user_id===1 || u.tier==='admin' || u.id===1 || u.user_id===1){
         go('../users/'); return;
       }
     } catch(e){}
@@ -410,24 +412,27 @@ function termExec(raw){
   if(lo==='uname'||lo==='uname -a'){ termOut('  jezabel OS v2.7.1 #1 SMP x86_64 GNU/Linux','ok'); return; }
   if(lo==='uptime'){ termOut('  up 99 days, 23:59,  1 user,  load: 0.01 0.01 0.00','ok'); return; }
   if(lo==='ls'||lo==='ls -la'||lo==='dir'){
-    var t=sessionStorage.getItem(TK); var isAdminNow=false;
+    var t=sessionStorage.getItem(TK); var u=JSON.parse(sessionStorage.getItem(UK)||'{}');
+    var isAdminNow=false;
     try {
       var p=JSON.parse(atob(t.split('.')[1]));
-      isAdminNow=(p.tier==='admin' || p.id===1 || p.user_id===1);
+      isAdminNow=(p.tier==='admin' || p.id===1 || p.user_id===1 || u.tier==='admin' || u.id===1 || u.user_id===1);
     } catch(e){}
     termOut('  chat/         ⟁ serpent channel (open: chat)\n  javascript/   ◉ available\n  python/       ◉ available\n  linux/        ◉ available\n  linux-fixes/  ◉ available'+(isAdminNow?'\n  users/        ▣ admin only':''),'ok'); return; }
   if(lo==='status'||lo==='ps aux'){
-    var t=sessionStorage.getItem(TK); var mods=4;
+    var t=sessionStorage.getItem(TK); var u=JSON.parse(sessionStorage.getItem(UK)||'{}');
+    var mods=4;
     try {
       var p=JSON.parse(atob(t.split('.')[1]));
-      if(p.tier==='admin' || p.id===1 || p.user_id===1) mods=5;
+      if(p.tier==='admin' || p.id===1 || p.user_id===1 || u.tier==='admin' || u.id===1 || u.user_id===1) mods=5;
     } catch(e){}
     termOut('  [auth]     active\n  [channel]  '+(connected?'mock-ssh live':'idle')+'\n  [modules]  '+mods+' loaded\n  [network]  nominal','ok'); return; }
   if(lo==='help'||lo==='man'||lo==='?'){
-    var t=sessionStorage.getItem(TK); var isAdminNow=false;
+    var t=sessionStorage.getItem(TK); var u=JSON.parse(sessionStorage.getItem(UK)||'{}');
+    var isAdminNow=false;
     try {
       var p=JSON.parse(atob(t.split('.')[1]));
-      isAdminNow=(p.tier==='admin' || p.id===1 || p.user_id===1);
+      isAdminNow=(p.tier==='admin' || p.id===1 || p.user_id===1 || u.tier==='admin' || u.id===1 || u.user_id===1);
     } catch(e){}
     termOut('  chat             open the serpent channel (live AI)\n  ssh [user@host]  open a mock ssh session (matrix-fire)\n  ls               list modules\n  open [module]    javascript / python / linux / linux-fixes'+(isAdminNow?' / users':'')+'\n  status           system status\n  whoami pwd date uname uptime\n  clear            clear terminal\n  logout / exit    end session','ok'); return; }
   if(lo==='neo'){ termOut('  follow the white rabbit.','mg'); return; }
