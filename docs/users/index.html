@@ -309,6 +309,18 @@ input:focus,textarea:focus,select:focus{border-color:var(--mg);box-shadow:0 0 10
 <script src="../assets/serpent-bg.js"></script>
 <script src="mock-data.js"></script>
 <script>
+  // ─ ADMIN BOUNCE ─
+  (function(){
+    var TK='jezabel_token', UK='jezabel_user';
+    var ud=JSON.parse(sessionStorage.getItem(UK)||'{}');
+    // IS_ADMIN logic mirrored from dashboard
+    var isA=(ud.role==='admin')||(ud.tier==='admin')||(ud.id===1)||(ud.user_id===1)||(ud.sub==='master');
+    if(!isA){
+      alert('ADMIN_ACCESS_REQUIRED');
+      window.location.replace('../dashboard/');
+    }
+  })();
+
   var currentUsers = [...MOCK_USERS];
   var filters = { type: '', tier: '' };
   var selectedUser = null;

@@ -226,18 +226,33 @@ body::after{content:'';position:fixed;inset:0;
 var TK='jezabel_token', UK='jezabel_user';
 var token=sessionStorage.getItem(TK);
 if(!token){ var b=(location.pathname.match(/^(.*\/docs\/)/)||['','/'])[1]; window.location.replace(b+'login/'); }
-var userData={}; try{ userData=JSON.parse(sessionStorage.getItem(UK)||'{}'); }catch(e){}
-var uname=userData.username||'user';
-var isAdmin=false;
-try {
-  var p=JSON.parse(atob(token.split('.')[1]));
-  var u=userData;
-  // specs: check token (p) and user object (u)
-  if(p.tier==='admin' || p.id===1 || p.user_id===1 || u.tier==='admin' || u.id===1 || u.user_id===1){
-    isAdmin=true;
-    document.getElementById('adminUsersCard').style.display='flex';
+var userData=JSON.parse(sessionStorage.getItem(UK)||'{}');
+// The JWT is the real identity — decode it and merge over the stored object so role/id
+// are present even if login stored only {username}. (Belt-and-suspenders w/ login.)
+try{var _c=JSON.parse(atob(token.split('.')[1]));userData=Object.assign({},userData,_c);
+    sessionStorage.setItem(UK,JSON.stringify(userData));}catch(e){}
+var uname=userData.username||userData.sub||'user';
+
+// Best-effort admin from JWT claims (instant paint). The SERVER is the real gate (below).
+function _claimAdmin(d){return d.role==='admin'||d.tier==='admin'||d.is_admin===true||d.id===1||d.user_id===1||d.sub==='master';}
+var isAdmin=_claimAdmin(userData);
+
+function applyAdmin(){
+  document.getElementById('adminUsersCard').style.display=isAdmin?'flex':'none';
+  // refresh terminal status if present
+  if(typeof termOut === 'function' && document.getElementById('term-input')){
+     // terminal is async boot, might not be ready yet
   }
-} catch(e){}
+}
+applyAdmin();
+
+// AUTHORITATIVE admin = the server's call. GET /love/v1/daes → 200 for admin, 403 else.
+// (Generic admin probe shared across the stack).
+(async function(){try{
+  var r=await fetch('https://sar1a.lempyra.com/love/v1/daes',{headers:{'Authorization':'Bearer '+token},credentials:'omit'});
+  var srv=r.status===200?true:(r.status===403?false:null);
+  if(srv!==null&&srv!==isAdmin){isAdmin=srv;applyAdmin();}}catch(e){}})();
+
 document.getElementById('sb-user').textContent=uname;
 document.getElementById('term-ps').textContent=uname+'@jezabel:~/codex$';
 
@@ -397,7 +412,7 @@ function termExec(raw){
     var u=JSON.parse(sessionStorage.getItem(UK)||'{}');
     try {
       var p=JSON.parse(atob(t.split('.')[1]));
-      if(p.tier==='admin' || p.id===1 || p.user_id===1 || u.tier==='admin' || u.id===1 || u.user_id===1){
+      if(isAdmin){
         go('../users/'); return;
       }
     } catch(e){}
@@ -416,7 +431,7 @@ function termExec(raw){
     var isAdminNow=false;
     try {
       var p=JSON.parse(atob(t.split('.')[1]));
-      isAdminNow=(p.tier==='admin' || p.id===1 || p.user_id===1 || u.tier==='admin' || u.id===1 || u.user_id===1);
+      isAdminNow=isAdmin;
     } catch(e){}
     termOut('  chat/         ⟁ serpent channel (open: chat)\n  javascript/   ◉ available\n  python/       ◉ available\n  linux/        ◉ available\n  linux-fixes/  ◉ available'+(isAdminNow?'\n  users/        ▣ admin only':''),'ok'); return; }
   if(lo==='status'||lo==='ps aux'){
@@ -432,7 +447,7 @@ function termExec(raw){
     var isAdminNow=false;
     try {
       var p=JSON.parse(atob(t.split('.')[1]));
-      isAdminNow=(p.tier==='admin' || p.id===1 || p.user_id===1 || u.tier==='admin' || u.id===1 || u.user_id===1);
+      isAdminNow=isAdmin;
     } catch(e){}
     termOut('  chat             open the serpent channel (live AI)\n  ssh [user@host]  open a mock ssh session (matrix-fire)\n  ls               list modules\n  open [module]    javascript / python / linux / linux-fixes'+(isAdminNow?' / users':'')+'\n  status           system status\n  whoami pwd date uname uptime\n  clear            clear terminal\n  logout / exit    end session','ok'); return; }
   if(lo==='neo'){ termOut('  follow the white rabbit.','mg'); return; }
@@ -468,6 +483,11 @@ document.addEventListener('click',function(e){ if(!e.target.closest('a')&&!e.tar
 function doLogout(){
   sessionStorage.removeItem(TK); sessionStorage.removeItem(UK); sessionStorage.removeItem('jezabel_refresh');
   var b=(location.pathname.match(/^(.*\/docs\/)/)||['','/'])[1]; window.location.replace(b+'login/');
+}
+</script>
+</body>
+</html>
+/docs\/)/)||['','/'])[1]; window.location.replace(b+'login/');
 }
 </script>
 </body>
