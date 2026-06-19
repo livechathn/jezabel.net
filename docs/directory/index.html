@@ -302,6 +302,13 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
       </div>
 
       <div class="pagination-controls">
+        <span class="filter-label">LIMIT:</span>
+        <select id="limitSelect" class="select-input" onchange="changeLimit()" style="margin-right: 15px; padding: 4px 8px;">
+          <option value="60">60</option>
+          <option value="150">150</option>
+          <option value="300">300</option>
+          <option value="600">600</option>
+        </select>
         <button class="page-btn" id="prevBtn" onclick="prevPage()" disabled>&lt; PREV</button>
         <span class="page-info" id="pageInfo">PAGE 1 OF 1</span>
         <button class="page-btn" id="nextBtn" onclick="nextPage()" disabled>NEXT &gt;</button>
@@ -530,7 +537,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
   // ── VIEW STATE ──
   let directoryRows = [];
   let totalRecords = 0;
-  let limit = 50;
+  let limit = 60;
   let offset = 0;
   let searchVal = '';
   let selectedGiro = '';
@@ -564,34 +571,38 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
       console.warn("Auth status check failed, proceeding to verify endpoint directly.", e);
     }
 
-    // 3. Setup filters and load data
-    setupFilters();
+    // 3. Initial load
     loadDirectory();
   })();
 
-  // ── POPULATE FILTERS ──
-  function setupFilters() {
+  // ── POPULATE FILTERS FROM DATA ──
+  function setupFilters(data) {
     const giros = new Set();
     const sectors = new Set();
 
-    SAMPLE_COMPANIES.forEach(c => {
+    data.forEach(c => {
       if (c.giro) giros.add(c.giro);
       if (c.sector) sectors.add(c.sector);
     });
 
     const giroSel = document.getElementById('giroFilter');
+    // Clear dynamic options
+    giroSel.innerHTML = '<option value="">ALL_ACTIVITIES</option>';
     giros.forEach(g => {
       const opt = document.createElement('option');
       opt.value = g;
       opt.textContent = g.length > 50 ? g.slice(0, 47) + '...' : g;
+      if (g === selectedGiro) opt.selected = true;
       giroSel.appendChild(opt);
     });
 
     const sectorSel = document.getElementById('sectorFilter');
+    sectorSel.innerHTML = '<option value="">ALL_SECTORS</option>';
     sectors.forEach(s => {
       const opt = document.createElement('option');
       opt.value = s;
       opt.textContent = s;
+      if (s === selectedSector) opt.selected = true;
       sectorSel.appendChild(opt);
     });
   }
@@ -655,7 +666,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
     syncStatus.textContent = "SYNCHRONIZING WITH LIVE ORCHESTRATOR...";
 
     try {
-      const res = await apiFetch(`/love/v1/directory?limit=${limit}&offset=${offset}`);
+      // Pass the query param for future server-side search capability
+      const res = await apiFetch(`/love/v1/directory?limit=${limit}&offset=${offset}&q=${encodeURIComponent(searchVal)}`);
       if (res.status === 200) {
         const payload = await res.json();
         directoryRows = payload.rows || [];
@@ -665,6 +677,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
         syncDot.className = "status-dot";
         syncStatus.textContent = "LIVE DATA LINK ACTIVE";
         document.getElementById('recordCount').textContent = `TOTAL RECORDS: ${totalRecords}`;
+        setupFilters(directoryRows);
         renderGrid();
       } else {
         throw new Error(`Orch rejected request with code ${res.status}`);
@@ -679,6 +692,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
       syncDot.className = "status-dot warn";
       syncStatus.textContent = "DRY-RUN FALLBACK ACTIVE (MOCK)";
       document.getElementById('recordCount').textContent = `TOTAL RECORDS (SAMPLE): ${totalRecords}`;
+      setupFilters(directoryRows);
       renderGrid();
     }
     updatePaginationUI();
@@ -688,19 +702,16 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
   function renderGrid() {
     const grid = document.getElementById('directoryGrid');
     
-    // Apply local client-side filter only if in dry-run/mock mode
-    let displayRows = directoryRows;
-    if (!isLiveMode) {
-      displayRows = directoryRows.filter(c => {
-        if (selectedGiro && c.giro !== selectedGiro) return false;
-        if (selectedSector && c.sector !== selectedSector) return false;
-        if (searchVal) {
-          const hay = `${c.legal_name} ${c.foreign_name || ''} ${c.giro || ''} ${c.sector || ''} ${c.institution_code}`.toLowerCase();
-          if (hay.indexOf(searchVal.toLowerCase()) === -1) return false;
-        }
-        return true;
-      });
-    }
+    // Always apply client-side filtering over the currently loaded subset for instant feedback
+    let displayRows = directoryRows.filter(c => {
+      if (selectedGiro && c.giro !== selectedGiro) return false;
+      if (selectedSector && c.sector !== selectedSector) return false;
+      if (searchVal) {
+        const hay = `${c.legal_name} ${c.foreign_name || ''} ${c.giro || ''} ${c.sector || ''} ${c.institution_code}`.toLowerCase();
+        if (hay.indexOf(searchVal.toLowerCase()) === -1) return false;
+      }
+      return true;
+    });
 
     if (displayRows.length === 0) {
       grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--dim);letter-spacing:1px;">NO NODES FOUND MATCHING SCAN CRITERIA</div>`;
@@ -710,7 +721,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
     grid.innerHTML = displayRows.map((c, i) => {
       const statusClass = (c.estatus || '').toLowerCase() === 'activo' ? '' : 'inactivo';
       return `
-        <div class="card" style="--delay: ${i * 0.15}s" onclick="openSheet('${c.institution_code}')">
+        <div class="card" style="--delay: ${i * 0.08}s" onclick="openSheet('${c.institution_code}')">
           <div class="card-scan"></div>
           <div class="card-header">
             <span class="code-tag">${c.institution_code || 'CCIC-UNKNOWN'}</span>
@@ -737,9 +748,6 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
     searchVal = document.getElementById('searchInput').value;
     if (isLiveMode) {
       offset = 0;
-      // Live search is often server-driven or requires debounced live fetch.
-      // For CCIC directory, let's reload with offset resetting if live search endpoint is configured,
-      // but in this version we trigger dynamic reload.
       debounceLoad();
     } else {
       renderGrid();
@@ -761,7 +769,6 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
   function debounceLoad() {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
-      // Live search can query the directory endpoint directly, passing search value if supported
       loadDirectory();
     }, 400);
   }
@@ -781,6 +788,12 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
       offset -= limit;
       loadDirectory();
     }
+  }
+
+  function changeLimit() {
+    limit = parseInt(document.getElementById('limitSelect').value) || 60;
+    offset = 0;
+    loadDirectory();
   }
 
   function nextPage() {
