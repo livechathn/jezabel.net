@@ -47,7 +47,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--mg);box-shadow:0 0 10
 
 /* MAIN */
 .main{height:calc(100vh - 60px);overflow-y:auto;padding:40px;position:relative;z-index:10;}
-.view{max-width:1400px;margin:0 auto}
+.view{max-width:1400px;margin:0 auto;position:relative;min-height:500px;}
 
 /* ROSTER VIEW */
 .roster-controls{
@@ -96,6 +96,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--mg);box-shadow:0 0 10
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
+  z-index: 2;
   overflow: hidden;
   animation: float 8s ease-in-out infinite;
   animation-delay: var(--delay);
@@ -466,7 +467,133 @@ input:focus,textarea:focus,select:focus{border-color:var(--mg);box-shadow:0 0 10
     setTimeout(() => { t.style.display = 'none'; }, 3000);
   }
 
-  init();
+  var linkCanvas = null;
+  var linkCtx = null;
+  var animFrameId = null;
+
+  function initCardLinks() {
+    var viewEl = document.querySelector('.view');
+    if (!viewEl) return;
+    
+    linkCanvas = document.getElementById('cardLinksCanvas');
+    if (!linkCanvas) {
+      linkCanvas = document.createElement('canvas');
+      linkCanvas.id = 'cardLinksCanvas';
+      linkCanvas.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;z-index:1;';
+      viewEl.appendChild(linkCanvas);
+    }
+    linkCtx = linkCanvas.getContext('2d');
+    
+    function resizeCanvas() {
+      if (!linkCanvas) return;
+      linkCanvas.width = viewEl.clientWidth;
+      linkCanvas.height = viewEl.clientHeight;
+      linkCanvas.style.width = viewEl.clientWidth + 'px';
+      linkCanvas.style.height = viewEl.clientHeight + 'px';
+    }
+    
+    resizeCanvas();
+    window.removeEventListener('resize', resizeCanvas);
+    window.addEventListener('resize', resizeCanvas);
+    
+    if (animFrameId) cancelAnimationFrame(animFrameId);
+    
+    var pulseOffset = 0;
+    
+    function drawLoop() {
+      if (!linkCanvas || !linkCtx) return;
+      
+      if (linkCanvas.height !== viewEl.clientHeight || linkCanvas.width !== viewEl.clientWidth) {
+        resizeCanvas();
+      }
+      
+      linkCtx.clearRect(0, 0, linkCanvas.width, linkCanvas.height);
+      
+      var cards = Array.from(document.querySelectorAll('.card'));
+      if (cards.length < 2) {
+        animFrameId = requestAnimationFrame(drawLoop);
+        return;
+      }
+      
+      var viewRect = viewEl.getBoundingClientRect();
+      
+      var points = cards.map(card => {
+        var rect = card.getBoundingClientRect();
+        return {
+          x: rect.left - viewRect.left + rect.width / 2,
+          y: rect.top - viewRect.top + rect.height / 2,
+          el: card,
+          hovered: card.matches(':hover')
+        };
+      });
+      
+      pulseOffset += 0.04;
+      
+      for (var i = 0; i < points.length; i++) {
+        var p1 = points[i];
+        
+        var neighbors = points
+          .map((p2, idx) => ({ idx: idx, dist: Math.hypot(p1.x - p2.x, p1.y - p2.y) }))
+          .filter(n => n.idx !== i)
+          .sort((a, b) => a.dist - b.dist)
+          .slice(0, 2);
+          
+        neighbors.forEach(n => {
+          var p2 = points[n.idx];
+          
+          linkCtx.beginPath();
+          linkCtx.moveTo(p1.x, p1.y);
+          linkCtx.lineTo(p2.x, p2.y);
+          
+          var isHigh = p1.hovered || p2.hovered;
+          
+          var color = '#00ff41'; // Green
+          if (p1.el.classList.contains('institution') || p2.el.classList.contains('institution')) {
+            color = '#00ccff'; // Cyan
+          }
+          
+          if (isHigh) {
+            linkCtx.strokeStyle = color;
+            linkCtx.lineWidth = 1.8;
+            linkCtx.shadowBlur = 8;
+            linkCtx.shadowColor = color;
+          } else {
+            linkCtx.strokeStyle = 'rgba(74, 26, 106, 0.25)'; // Dim purple link
+            linkCtx.lineWidth = 0.8;
+            linkCtx.shadowBlur = 0;
+          }
+          linkCtx.stroke();
+          linkCtx.shadowBlur = 0;
+          
+          if (n.dist < 600) {
+            var pct = (pulseOffset + i * 0.1) % 1.0;
+            var px = p1.x + (p2.x - p1.x) * pct;
+            var py = p1.y + (p2.y - p1.y) * pct;
+            linkCtx.beginPath();
+            linkCtx.arc(px, py, isHigh ? 3 : 1.5, 0, Math.PI * 2);
+            linkCtx.fillStyle = isHigh ? color : '#ff00ff'; // Pulse color
+            if (isHigh) {
+              linkCtx.shadowBlur = 6;
+              linkCtx.shadowColor = color;
+            }
+            linkCtx.fill();
+            linkCtx.shadowBlur = 0;
+          }
+        });
+      }
+      
+      animFrameId = requestAnimationFrame(drawLoop);
+    }
+    
+    drawLoop();
+  }
+
+  function init() {
+    renderFilters();
+    renderRoster();
+    initCardLinks();
+  }
+
 </script>
 </body>
 </html>
