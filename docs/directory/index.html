@@ -554,9 +554,9 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
     const legalName = c.legal_name || c.legalName || c.nombre_legal || c.nombre || c.name || 'Sin Nombre Legal';
     const foreignName = c.foreign_name || c.foreignName || c.nombre_extranjero || '';
     const status = c.estatus || c.status || c.estado || 'ACTIVO';
-    const giro = c.giro || c.actividad || c.giro_actividad || '—';
+    const giro = c.giro || c.industry || c.actividad || c.giro_actividad || '—';
     const sector = c.sector || c.sector_actividad || '—';
-    const cat = parseInt(c.categoria_afiliados || c.categoria || c.categoriaAfiliados) || 1;
+    const cat = parseInt(c.categoria_afiliados || c.category || c.categoria || c.categoriaAfiliados) || 1;
     const rtn = c.rtn || c.rtn_compania || null;
     const cap = c.capital_social || c.capital || 0;
     const web = c.website || c.sitio_web || null;
@@ -574,6 +574,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
     let phones = [];
     if (Array.isArray(c.phones)) {
       phones = c.phones;
+    } else if (c.phones && typeof c.phones === 'object') {
+      phones = Object.values(c.phones).filter(Boolean);   // API returns {primary,secondary,mobile,fax}
     } else if (typeof c.phones === 'string') {
       phones = [c.phones];
     } else if (c.telefono) {
@@ -735,7 +737,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
       const res = await apiFetch(`/love/v1/directory?limit=${limit}&offset=${offset}`);
       if (res.status === 200) {
         const payload = await res.json();
-        const rawRows = payload.rows || [];
+        const rawRows = payload.data || payload.rows || [];
         directoryRows = rawRows.map(c => normalizeCompany(c));
         totalRecords = payload.total || directoryRows.length;
         isLiveMode = true;
