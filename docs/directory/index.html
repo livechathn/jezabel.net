@@ -545,6 +545,73 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
   let selectedCompany = null;
   let isLiveMode = false;
 
+  // ── DEFENSIVE DATA NORMALIZATION ──
+  function normalizeCompany(c) {
+    if (!c) return {};
+    
+    // Key-matching normalization
+    const code = c.institution_code || c.codigo || c.id || c.codigo_sn || 'CCIC-UNKNOWN';
+    const legalName = c.legal_name || c.legalName || c.nombre_legal || c.nombre || c.name || 'Sin Nombre Legal';
+    const foreignName = c.foreign_name || c.foreignName || c.nombre_extranjero || '';
+    const status = c.estatus || c.status || c.estado || 'ACTIVO';
+    const giro = c.giro || c.actividad || c.giro_actividad || '—';
+    const sector = c.sector || c.sector_actividad || '—';
+    const cat = parseInt(c.categoria_afiliados || c.categoria || c.categoriaAfiliados) || 1;
+    const rtn = c.rtn || c.rtn_compania || null;
+    const cap = c.capital_social || c.capital || 0;
+    const web = c.website || c.sitio_web || null;
+
+    // Normalizing arrays defensively
+    let emails = [];
+    if (Array.isArray(c.emails)) {
+      emails = c.emails;
+    } else if (typeof c.emails === 'string') {
+      emails = [c.emails];
+    } else if (c.email) {
+      emails = [c.email];
+    }
+
+    let phones = [];
+    if (Array.isArray(c.phones)) {
+      phones = c.phones;
+    } else if (typeof c.phones === 'string') {
+      phones = [c.phones];
+    } else if (c.telefono) {
+      phones = [c.telefono];
+    }
+
+    let contacts = [];
+    if (Array.isArray(c.contacts)) {
+      contacts = c.contacts;
+    }
+
+    let addresses = [];
+    if (Array.isArray(c.addresses)) {
+      addresses = c.addresses;
+    }
+
+    return {
+      institution_code: code,
+      legal_name: legalName,
+      foreign_name: foreignName,
+      estatus: status,
+      giro: giro,
+      sector: sector,
+      categoria_afiliados: cat,
+      rtn: rtn,
+      capital_social: cap,
+      website: web,
+      emails: emails,
+      phones: phones,
+      contacts: contacts,
+      addresses: addresses,
+      fecha_constitucion: c.fecha_constitucion || '—',
+      fecha_ingreso: c.fecha_ingreso || '—',
+      num_orden: c.num_orden || '—',
+      fecha_actualizacion: c.fecha_actualizacion || null
+    };
+  }
+
   // ── AUTH CHECK & BOOTSTRAP ──
   (async function bootstrap() {
     // 1. Initial local credentials bounce check
@@ -581,12 +648,11 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
     const sectors = new Set();
 
     data.forEach(c => {
-      if (c.giro) giros.add(c.giro);
-      if (c.sector) sectors.add(c.sector);
+      if (c && c.giro) giros.add(c.giro);
+      if (c && c.sector) sectors.add(c.sector);
     });
 
     const giroSel = document.getElementById('giroFilter');
-    // Clear dynamic options
     giroSel.innerHTML = '<option value="">ALL_ACTIVITIES</option>';
     giros.forEach(g => {
       const opt = document.createElement('option');
@@ -666,11 +732,11 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
     syncStatus.textContent = "SYNCHRONIZING WITH LIVE ORCHESTRATOR...";
 
     try {
-      // Remove q parameter because the live endpoint does not support it yet.
       const res = await apiFetch(`/love/v1/directory?limit=${limit}&offset=${offset}`);
       if (res.status === 200) {
         const payload = await res.json();
-        directoryRows = payload.rows || [];
+        const rawRows = payload.rows || [];
+        directoryRows = rawRows.map(c => normalizeCompany(c));
         totalRecords = payload.total || directoryRows.length;
         isLiveMode = true;
 
@@ -685,7 +751,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
     } catch (err) {
       console.warn("Live fetch failed. Invoking dry-run sample fallback.", err);
       // Fallback to inline sample data
-      directoryRows = [...SAMPLE_COMPANIES];
+      directoryRows = SAMPLE_COMPANIES.map(c => normalizeCompany(c));
       totalRecords = SAMPLE_COMPANIES.length;
       isLiveMode = false;
 
