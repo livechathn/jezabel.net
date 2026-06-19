@@ -307,7 +307,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
           <option value="60">60</option>
           <option value="150">150</option>
           <option value="300">300</option>
-          <option value="600">600</option>
+          <option value="500">500</option>
         </select>
         <button class="page-btn" id="prevBtn" onclick="prevPage()" disabled>&lt; PREV</button>
         <span class="page-info" id="pageInfo">PAGE 1 OF 1</span>
@@ -666,8 +666,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
     syncStatus.textContent = "SYNCHRONIZING WITH LIVE ORCHESTRATOR...";
 
     try {
-      // Pass the query param for future server-side search capability
-      const res = await apiFetch(`/love/v1/directory?limit=${limit}&offset=${offset}&q=${encodeURIComponent(searchVal)}`);
+      // Remove q parameter because the live endpoint does not support it yet.
+      const res = await apiFetch(`/love/v1/directory?limit=${limit}&offset=${offset}`);
       if (res.status === 200) {
         const payload = await res.json();
         directoryRows = payload.rows || [];
@@ -739,8 +739,6 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
         </div>
       `;
     }).join('');
-
-    initCardLinks();
   }
 
   // ── CONTROLS HANDLERS ──
@@ -925,123 +923,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
     document.getElementById('sheetOverlay').style.display = 'none';
   }
 
-  // ── DYNAMIC CARD NETWORK CONNECTION (CANVAS SHIELD) ──
-  let linkCanvas = null;
-  let linkCtx = null;
-  let animFrameId = null;
 
-  function initCardLinks() {
-    const viewEl = document.querySelector('.view');
-    if (!viewEl) return;
-    
-    linkCanvas = document.getElementById('cardLinksCanvas');
-    if (!linkCanvas) {
-      linkCanvas = document.createElement('canvas');
-      linkCanvas.id = 'cardLinksCanvas';
-      linkCanvas.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;z-index:1;';
-      viewEl.appendChild(linkCanvas);
-    }
-    linkCtx = linkCanvas.getContext('2d');
-    
-    function resizeCanvas() {
-      if (!linkCanvas) return;
-      linkCanvas.width = viewEl.clientWidth;
-      linkCanvas.height = viewEl.clientHeight;
-      linkCanvas.style.width = viewEl.clientWidth + 'px';
-      linkCanvas.style.height = viewEl.clientHeight + 'px';
-    }
-    
-    resizeCanvas();
-    window.removeEventListener('resize', resizeCanvas);
-    window.addEventListener('resize', resizeCanvas);
-    
-    if (animFrameId) cancelAnimationFrame(animFrameId);
-    
-    let pulseOffset = 0;
-    
-    function drawLoop() {
-      if (!linkCanvas || !linkCtx) return;
-      
-      if (linkCanvas.height !== viewEl.clientHeight || linkCanvas.width !== viewEl.clientWidth) {
-        resizeCanvas();
-      }
-      
-      linkCtx.clearRect(0, 0, linkCanvas.width, linkCanvas.height);
-      
-      const cards = Array.from(document.querySelectorAll('.card'));
-      if (cards.length < 2) {
-        animFrameId = requestAnimationFrame(drawLoop);
-        return;
-      }
-      
-      const viewRect = viewEl.getBoundingClientRect();
-      
-      const points = cards.map(card => {
-        const rect = card.getBoundingClientRect();
-        return {
-          x: rect.left - viewRect.left + rect.width / 2,
-          y: rect.top - viewRect.top + rect.height / 2,
-          el: card,
-          hovered: card.matches(':hover')
-        };
-      });
-      
-      pulseOffset += 0.035;
-      
-      for (let i = 0; i < points.length; i++) {
-        const p1 = points[i];
-        
-        const neighbors = points
-          .map((p2, idx) => ({ idx: idx, dist: Math.hypot(p1.x - p2.x, p1.y - p2.y) }))
-          .filter(n => n.idx !== i && n.dist < 380)
-          .sort((a, b) => a.dist - b.dist)
-          .slice(0, 2);
-          
-        neighbors.forEach(n => {
-          const p2 = points[n.idx];
-          
-          linkCtx.beginPath();
-          linkCtx.moveTo(p1.x, p1.y);
-          linkCtx.lineTo(p2.x, p2.y);
-          
-          const isHigh = p1.hovered || p2.hovered;
-          const color = '#00ccff'; // Directory theme color (cyan)
-          
-          if (isHigh) {
-            linkCtx.strokeStyle = color;
-            linkCtx.lineWidth = 1.6;
-            linkCtx.shadowBlur = 8;
-            linkCtx.shadowColor = color;
-          } else {
-            linkCtx.strokeStyle = 'rgba(74, 26, 106, 0.2)'; 
-            linkCtx.lineWidth = 0.8;
-            linkCtx.shadowBlur = 0;
-          }
-          linkCtx.stroke();
-          linkCtx.shadowBlur = 0;
-          
-          if (n.dist < 380) {
-            const pct = (pulseOffset + i * 0.1) % 1.0;
-            const px = p1.x + (p2.x - p1.x) * pct;
-            const py = p1.y + (p2.y - p1.y) * pct;
-            linkCtx.beginPath();
-            linkCtx.arc(px, py, isHigh ? 3 : 1.5, 0, Math.PI * 2);
-            linkCtx.fillStyle = isHigh ? color : '#ff00ff';
-            if (isHigh) {
-              linkCtx.shadowBlur = 6;
-              linkCtx.shadowColor = color;
-            }
-            linkCtx.fill();
-            linkCtx.shadowBlur = 0;
-          }
-        });
-      }
-      
-      animFrameId = requestAnimationFrame(drawLoop);
-    }
-    
-    drawLoop();
-  }
 </script>
 </body>
 </html>
