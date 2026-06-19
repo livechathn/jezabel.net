@@ -171,8 +171,8 @@
             if (distance < 350) {
                 const force = (350 - distance) / 350;
                 const angle = Math.atan2(dy, dx);
-                star.vx += Math.cos(angle) * force * 5;
-                star.vy += Math.sin(angle) * force * 5;
+                star.vx += Math.cos(angle) * force * 3; // 40% slower
+                star.vy += Math.sin(angle) * force * 3;
             }
         });
     });

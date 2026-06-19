@@ -578,8 +578,8 @@ var BOOT_MSGS=[
                     // MUCH stronger push force
                     const force = (350 - distance) / 350;
                     const angle = Math.atan2(dy, dx);
-                    star.vx += Math.cos(angle) * force * 5; // Doubled force
-                    star.vy += Math.sin(angle) * force * 5;
+                    star.vx += Math.cos(angle) * force * 3; // 40% slower
+                    star.vy += Math.sin(angle) * force * 3;
                     
                     // Flip color in wave (magenta <-> green)
                     const originalColor = star.color;
@@ -594,7 +594,7 @@ var BOOT_MSGS=[
                             star.brightness = 0.5 + Math.random() * 0.5;
                             star.radius = Math.random() * 2 + 1;
                         }, 600);
-                    }, distance * 1.5); // Faster wave propagation
+                    }, distance * 2.5); // 40% slower wave propagation
                 }
             });
             
@@ -604,8 +604,8 @@ var BOOT_MSGS=[
                 star.x = clickX;
                 star.y = clickY;
                 const angle = (Math.PI * 2 / 16) * i;
-                star.vx = Math.cos(angle) * 6; // Faster ejection
-                star.vy = Math.sin(angle) * 6;
+                star.vx = Math.cos(angle) * 3.6; // 40% slower ejection
+                star.vy = Math.sin(angle) * 3.6;
                 star.brightness = 1;
                 hackerStars.push(star);
             }
@@ -613,7 +613,7 @@ var BOOT_MSGS=[
             // Add expanding ring effect
             let ringRadius = 0;
             const ringInterval = setInterval(() => {
-                ringRadius += 15;
+                ringRadius += 9; // 40% slower ring expansion
                 
                 sCtx.beginPath();
                 sCtx.arc(clickX, clickY, ringRadius, 0, Math.PI * 2);
