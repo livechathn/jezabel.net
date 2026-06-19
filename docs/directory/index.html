@@ -249,6 +249,20 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
 .gate-title{font-size:20px;letter-spacing:4px;color:var(--mg);margin-bottom:20px;text-shadow:0 0 15px rgba(255,0,255,0.4);}
 .gate-desc{font-size:12px;color:var(--fg);margin-bottom:30px;line-height:1.6;}
 
+/* LETTER FILTER */
+.letter-filter{
+  display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;
+  background:rgba(13,0,21,0.5);padding:10px 20px;border:1px solid var(--border);
+  justify-content:center;
+}
+.letter-btn{
+  padding:4px 8px;font-size:11px;color:var(--dim);border:1px solid transparent;
+  text-transform:uppercase;transition:all 0.2s;
+  cursor:pointer;
+}
+.letter-btn:hover{color:var(--cy);border-color:var(--cy);}
+.letter-btn.active{color:var(--mg);border-color:var(--mg);background:rgba(255,0,255,0.05);text-shadow:0 0 8px rgba(255,0,255,0.5);}
+
 /* SCROLLBAR */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
@@ -314,6 +328,9 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
         <button class="page-btn" id="nextBtn" onclick="nextPage()" disabled>NEXT &gt;</button>
       </div>
     </div>
+
+    <!-- A-Z Alphabet Filter -->
+    <div class="letter-filter" id="letterFilter"></div>
 
     <div class="roster-grid" id="directoryGrid"></div>
   </div>
@@ -535,13 +552,15 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
   let isAdmin = false;
 
   // ── VIEW STATE ──
-  let directoryRows = [];
-  let totalRecords = 0;
+  let allDirectoryRows = []; // Master list of all background-loaded rows
+  let activeTotalRecords = 0; // Filtered rows count
+  let totalRecords = 0; // Absolute total
   let limit = 60;
   let offset = 0;
   let searchVal = '';
   let selectedGiro = '';
   let selectedSector = '';
+  let selectedLetter = ''; // Selected A-Z letter filter
   let selectedCompany = null;
   let isLiveMode = false;
 
@@ -640,7 +659,10 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
       console.warn("Auth status check failed, proceeding to verify endpoint directly.", e);
     }
 
-    // 3. Initial load
+    // 3. Setup alphabet Quick-filter controls
+    drawAlphabetFilter();
+
+    // 4. Initial load
     loadDirectory();
   })();
 
@@ -656,7 +678,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
 
     const giroSel = document.getElementById('giroFilter');
     giroSel.innerHTML = '<option value="">ALL_ACTIVITIES</option>';
-    giros.forEach(g => {
+    Array.from(giros).sort().forEach(g => {
       const opt = document.createElement('option');
       opt.value = g;
       opt.textContent = g.length > 50 ? g.slice(0, 47) + '...' : g;
@@ -666,13 +688,34 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
 
     const sectorSel = document.getElementById('sectorFilter');
     sectorSel.innerHTML = '<option value="">ALL_SECTORS</option>';
-    sectors.forEach(s => {
+    Array.from(sectors).sort().forEach(s => {
       const opt = document.createElement('option');
       opt.value = s;
       opt.textContent = s;
       if (s === selectedSector) opt.selected = true;
       sectorSel.appendChild(opt);
     });
+  }
+
+  // ── DRAW ALPHABET FILTER CONTROLS ──
+  function drawAlphabetFilter() {
+    const container = document.getElementById('letterFilter');
+    if (!container) return;
+    
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    const allBtn = `<span class="letter-btn ${!selectedLetter ? 'active' : ''}" onclick="filterLetter('')">ALL</span>`;
+    const numBtn = `<span class="letter-btn ${selectedLetter === '#' ? 'active' : ''}" onclick="filterLetter('#')">#</span>`;
+    
+    container.innerHTML = allBtn + letters.map(l => 
+      `<span class="letter-btn ${selectedLetter === l ? 'active' : ''}" onclick="filterLetter('${l}')">${l}</span>`
+    ).join('') + numBtn;
+  }
+
+  function filterLetter(l) {
+    selectedLetter = l;
+    offset = 0;
+    drawAlphabetFilter();
+    renderGrid();
   }
 
   // ── API FETCH HELPER (with token refresh) ──
@@ -725,7 +768,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
     return r;
   }
 
-  // ── LOAD CCIC DIRECTORY ──
+  // ── LOAD CCIC DIRECTORY (with background full fetch loading) ──
   async function loadDirectory() {
     const syncDot = document.getElementById('syncDot');
     const syncStatus = document.getElementById('syncStatus');
@@ -734,52 +777,103 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
     syncStatus.textContent = "SYNCHRONIZING WITH LIVE ORCHESTRATOR...";
 
     try {
-      const res = await apiFetch(`/love/v1/directory?limit=${limit}&offset=${offset}`);
+      // 1. Fetch initial batch (limit=500)
+      const res = await apiFetch(`/love/v1/directory?limit=500&offset=0`);
       if (res.status === 200) {
         const payload = await res.json();
         const rawRows = payload.data || payload.rows || [];
-        directoryRows = rawRows.map(c => normalizeCompany(c));
-        totalRecords = payload.total || directoryRows.length;
+        allDirectoryRows = rawRows.map(c => normalizeCompany(c));
+        totalRecords = payload.total || allDirectoryRows.length;
         isLiveMode = true;
 
         syncDot.className = "status-dot";
-        syncStatus.textContent = "LIVE DATA LINK ACTIVE";
+        syncStatus.textContent = "LIVE DATA LINK ACTIVE (LOADING IN BACKGROUND...)";
         document.getElementById('recordCount').textContent = `TOTAL RECORDS: ${totalRecords}`;
-        setupFilters(directoryRows);
+        
+        setupFilters(allDirectoryRows);
         renderGrid();
+        
+        // 2. Fetch remaining records in parallel in the background to lift constraints
+        if (totalRecords > 500) {
+          const promises = [];
+          for (let bgOffset = 500; bgOffset < totalRecords; bgOffset += 500) {
+            promises.push(
+              apiFetch(`/love/v1/directory?limit=500&offset=${bgOffset}`)
+                .then(r => r.status === 200 ? r.json() : null)
+                .then(data => {
+                  if (data) {
+                    const rows = data.data || data.rows || [];
+                    const normalized = rows.map(c => normalizeCompany(c));
+                    allDirectoryRows = allDirectoryRows.concat(normalized);
+                    // Update filters and rendering lists live as results stream in
+                    setupFilters(allDirectoryRows);
+                    renderGrid();
+                  }
+                })
+                .catch(e => console.warn(`Bg batch at offset ${bgOffset} failed`, e))
+            );
+          }
+          await Promise.all(promises);
+          syncStatus.textContent = "CORE SYNC COMPLETE";
+        } else {
+          syncStatus.textContent = "CORE SYNC COMPLETE";
+        }
       } else {
         throw new Error(`Orch rejected request with code ${res.status}`);
       }
     } catch (err) {
       console.warn("Live fetch failed. Invoking dry-run sample fallback.", err);
       // Fallback to inline sample data
-      directoryRows = SAMPLE_COMPANIES.map(c => normalizeCompany(c));
+      allDirectoryRows = SAMPLE_COMPANIES.map(c => normalizeCompany(c));
       totalRecords = SAMPLE_COMPANIES.length;
       isLiveMode = false;
 
       syncDot.className = "status-dot warn";
       syncStatus.textContent = "DRY-RUN FALLBACK ACTIVE (MOCK)";
       document.getElementById('recordCount').textContent = `TOTAL RECORDS (SAMPLE): ${totalRecords}`;
-      setupFilters(directoryRows);
+      setupFilters(allDirectoryRows);
       renderGrid();
     }
-    updatePaginationUI();
   }
 
-  // ── RENDER DIRECTORY CARDS ──
+  // ── RENDER DIRECTORY CARDS (Complete Client-side Filtering & Paging) ──
   function renderGrid() {
     const grid = document.getElementById('directoryGrid');
     
-    // Always apply client-side filtering over the currently loaded subset for instant feedback
-    let displayRows = directoryRows.filter(c => {
+    // Always apply client-side filtering over the complete loaded list for instant search
+    let filteredRows = allDirectoryRows.filter(c => {
+      // 1. Giro filter
       if (selectedGiro && c.giro !== selectedGiro) return false;
+      
+      // 2. Sector filter
       if (selectedSector && c.sector !== selectedSector) return false;
+      
+      // 3. Search filter
       if (searchVal) {
         const hay = `${c.legal_name} ${c.foreign_name || ''} ${c.giro || ''} ${c.sector || ''} ${c.institution_code}`.toLowerCase();
         if (hay.indexOf(searchVal.toLowerCase()) === -1) return false;
       }
+
+      // 4. Alphabet quick filter
+      if (selectedLetter) {
+        const name = (c.legal_name || '').trim().toUpperCase();
+        if (selectedLetter === '#') {
+          const code = name.charCodeAt(0);
+          const isAlpha = (code >= 65 && code <= 90);
+          if (isAlpha) return false;
+        } else {
+          if (!name.startsWith(selectedLetter)) return false;
+        }
+      }
+      
       return true;
     });
+
+    activeTotalRecords = filteredRows.length;
+    updatePaginationUI();
+
+    // Slice dynamic view subset
+    const displayRows = filteredRows.slice(offset, offset + limit);
 
     if (displayRows.length === 0) {
       grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--dim);letter-spacing:1px;">NO NODES FOUND MATCHING SCAN CRITERIA</div>`;
@@ -812,66 +906,50 @@ input:focus,textarea:focus,select:focus{border-color:var(--cy);box-shadow:0 0 10
   // ── CONTROLS HANDLERS ──
   function handleSearch() {
     searchVal = document.getElementById('searchInput').value;
-    if (isLiveMode) {
-      offset = 0;
-      debounceLoad();
-    } else {
-      renderGrid();
-    }
+    offset = 0;
+    renderGrid();
   }
 
   function handleFilter() {
     selectedGiro = document.getElementById('giroFilter').value;
     selectedSector = document.getElementById('sectorFilter').value;
-    if (isLiveMode) {
-      offset = 0;
-      loadDirectory();
-    } else {
-      renderGrid();
-    }
-  }
-
-  let debounceTimer;
-  function debounceLoad() {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-      loadDirectory();
-    }, 400);
+    offset = 0;
+    renderGrid();
   }
 
   // ── PAGINATION ──
   function updatePaginationUI() {
     const pageNum = Math.floor(offset / limit) + 1;
-    const totalPages = Math.max(1, Math.ceil(totalRecords / limit));
+    const totalPages = Math.max(1, Math.ceil(activeTotalRecords / limit));
     
     document.getElementById('pageInfo').textContent = `PAGE ${pageNum} OF ${totalPages}`;
     document.getElementById('prevBtn').disabled = offset === 0;
-    document.getElementById('nextBtn').disabled = (offset + limit) >= totalRecords;
+    document.getElementById('nextBtn').disabled = (offset + limit) >= activeTotalRecords;
   }
 
   function prevPage() {
     if (offset >= limit) {
       offset -= limit;
-      loadDirectory();
+      renderGrid();
     }
   }
 
   function changeLimit() {
     limit = parseInt(document.getElementById('limitSelect').value) || 60;
     offset = 0;
-    loadDirectory();
+    renderGrid();
   }
 
   function nextPage() {
-    if ((offset + limit) < totalRecords) {
+    if ((offset + limit) < activeTotalRecords) {
       offset += limit;
-      loadDirectory();
+      renderGrid();
     }
   }
 
   // ── DETAIL SHEET OVERLAY ──
   function openSheet(code) {
-    selectedCompany = directoryRows.find(c => c.institution_code === code) || SAMPLE_COMPANIES.find(c => c.institution_code === code);
+    selectedCompany = allDirectoryRows.find(c => c.institution_code === code) || SAMPLE_COMPANIES.find(c => c.institution_code === code);
     if (!selectedCompany) return;
 
     document.getElementById('sheetAvatar').textContent = (selectedCompany.legal_name || 'C').charAt(0).toUpperCase();
