@@ -189,6 +189,15 @@ body::after{content:'';position:fixed;inset:0;
       </div>
       <div class="mod-footer"><a href="../strudel/" class="mod-btn">⌬ open strudel/</a></div>
     </div>
+    <div class="mod-card directory" id="adminDirectoryCard" style="display:none">
+      <div class="mod-header"><span class="dot"></span><span>directory/</span><span class="mod-lang">ADMIN · CCIC</span></div>
+      <div class="mod-body">
+        <div class="mod-item">CCIC company list — search & filter</div>
+        <div class="mod-item">institution detail view</div>
+        <div class="mod-item">live api sync status</div>
+      </div>
+      <div class="mod-footer"><a href="../directory/" class="mod-btn">▣ open directory/</a></div>
+    </div>
     <div class="mod-card users" id="adminUsersCard" style="display:none">
       <div class="mod-header"><span class="dot"></span><span>users/</span><span class="mod-lang">ADMIN · DB</span></div>
       <div class="mod-body">
@@ -239,6 +248,7 @@ var isAdmin=_claimAdmin(userData);
 
 function applyAdmin(){
   document.getElementById('adminUsersCard').style.display=isAdmin?'flex':'none';
+  document.getElementById('adminDirectoryCard').style.display=isAdmin?'flex':'none';
   // refresh terminal status if present
   if(typeof termOut === 'function' && document.getElementById('term-input')){
      // terminal is async boot, might not be ready yet
@@ -407,6 +417,17 @@ function termExec(raw){
   if(lo==='open python'||lo==='open py'){ go('../app/python/cli-apps-parsing/'); return; }
   if(lo==='open linux'||lo==='open linuxmagick'){ go('../app/linuxMagick/'); return; }
   if(lo==='open linux-fixes'||lo==='open fixes'){ go('../app/linuxFixes/raspberrypi/swap/'); return; }
+  if(lo==='open directory'||lo==='directory'){
+    var t=sessionStorage.getItem(TK);
+    var u=JSON.parse(sessionStorage.getItem(UK)||'{}');
+    try {
+      var p=JSON.parse(atob(t.split('.')[1]));
+      if(isAdmin){
+        go('../directory/'); return;
+      }
+    } catch(e){}
+    termOut('  permission denied: admin only','err'); return;
+  }
   if(lo==='open users'||lo==='users'){
     var t=sessionStorage.getItem(TK);
     var u=JSON.parse(sessionStorage.getItem(UK)||'{}');
@@ -433,13 +454,13 @@ function termExec(raw){
       var p=JSON.parse(atob(t.split('.')[1]));
       isAdminNow=isAdmin;
     } catch(e){}
-    termOut('  chat/         ⟁ serpent channel (open: chat)\n  javascript/   ◉ available\n  python/       ◉ available\n  linux/        ◉ available\n  linux-fixes/  ◉ available'+(isAdminNow?'\n  users/        ▣ admin only':''),'ok'); return; }
+    termOut('  chat/         ⟁ serpent channel (open: chat)\n  javascript/   ◉ available\n  python/       ◉ available\n  linux/        ◉ available\n  linux-fixes/  ◉ available'+(isAdminNow?'\n  directory/    ▣ admin only (open: directory)\n  users/        ▣ admin only (open: users)':''),'ok'); return; }
   if(lo==='status'||lo==='ps aux'){
     var t=sessionStorage.getItem(TK); var u=JSON.parse(sessionStorage.getItem(UK)||'{}');
     var mods=4;
     try {
       var p=JSON.parse(atob(t.split('.')[1]));
-      if(p.tier==='admin' || p.id===1 || p.user_id===1 || u.tier==='admin' || u.id===1 || u.user_id===1) mods=5;
+      if(p.tier==='admin' || p.id===1 || p.user_id===1 || u.tier==='admin' || u.id===1 || u.user_id===1) mods=6;
     } catch(e){}
     termOut('  [auth]     active\n  [channel]  '+(connected?'mock-ssh live':'idle')+'\n  [modules]  '+mods+' loaded\n  [network]  nominal','ok'); return; }
   if(lo==='help'||lo==='man'||lo==='?'){
@@ -449,7 +470,7 @@ function termExec(raw){
       var p=JSON.parse(atob(t.split('.')[1]));
       isAdminNow=isAdmin;
     } catch(e){}
-    termOut('  chat             open the serpent channel (live AI)\n  ssh [user@host]  open a mock ssh session (matrix-fire)\n  ls               list modules\n  open [module]    javascript / python / linux / linux-fixes'+(isAdminNow?' / users':'')+'\n  status           system status\n  whoami pwd date uname uptime\n  clear            clear terminal\n  logout / exit    end session','ok'); return; }
+    termOut('  chat             open the serpent channel (live AI)\n  ssh [user@host]  open a mock ssh session (matrix-fire)\n  ls               list modules\n  open [module]    javascript / python / linux / linux-fixes'+(isAdminNow?' / directory / users':'')+'\n  status           system status\n  whoami pwd date uname uptime\n  clear            clear terminal\n  logout / exit    end session','ok'); return; }
   if(lo==='neo'){ termOut('  follow the white rabbit.','mg'); return; }
   if(lo==='matrix'){ termOut('  there is no spoon.','mg'); return; }
   if(lo==='hack'){ termOut('  read the source. that is the hack.','mg'); return; }
